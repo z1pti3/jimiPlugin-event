@@ -1,8 +1,6 @@
 import time
 
-from core import db, helpers, logging
-
-dbCollectionName = "event"
+from core import db, helpers, logging, audit
 
 class _event(db._document):
     conductID = str()
@@ -20,9 +18,7 @@ class _event(db._document):
     score = int()
     uid = str()
 
-    history = list()
-
-    _dbCollection = db.db[dbCollectionName]
+    _dbCollection = db.db["event"]
 
     def new(self,conductID,flowID,eventType,eventSubType,expiryTime,eventValues,uid,accuracy,impact,benign,score):
         self.conductID = conductID
@@ -42,8 +38,8 @@ class _event(db._document):
         return super(_event, self).new() 
 
     def updateRecord(self,eventValues,expiryTime):
-        self.history.append( { "lastUpdate" : self.lastUpdateTime, "endDate" : int(time.time()), "expiryTime" : self.expiryTime, "eventValues" : self.eventValues } )
+        audit._audit().add("event","history",{ "lastUpdate" : self.lastUpdateTime, "endDate" : int(time.time()), "expiryTime" : self.expiryTime, "eventValues" : self.eventValues })
         self.eventValues = eventValues
         self.expiryTime = expiryTime
-        self.update(["eventValues","expiryTime","history"])
+        self.update(["eventValues","expiryTime"])
 
