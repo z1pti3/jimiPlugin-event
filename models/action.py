@@ -64,6 +64,10 @@ class _raiseEvent(action._action):
                 actionResult["rc"] = 202
                 return actionResult
 
+            else:
+                foundEvent.expiryTime = int(time.time() + timeToLive)
+                foundEvent.update(["expiryTime"])
+
             actionResult["result"] = True
             actionResult["rc"] = 302
             return actionResult
