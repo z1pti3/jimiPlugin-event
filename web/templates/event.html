@@ -1,0 +1,66 @@
+<script src="{{ url_for('static', filename='includes/jquery/js/jquery-3.4.1.js') }}"></script>
+<script src="{{ url_for('static', filename='includes/jquery/js/jquery.datatables.min.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='includes/datatables/css/dataTables.bootstrap.css') }}">
+<script src="{{ url_for('static', filename='includes/datatables/js/dataTables.bootstrap.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='includes/bootstrap-3.3.7/css/bootstrap.min.css') }}">
+<script src="{{ url_for('static', filename='includes/bootstrap-3.3.7/js/bootstrap.min.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/datatable.css') }}">
+
+<html>
+    <head>
+        
+    </head>
+    <body>
+        <table id="orderTable" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th class="th-sm">_id</th>
+                    <th class="th-sm">uid</th>
+                    <th class="th-sm">eventRaiseTime</th>
+                    <th class="th-sm">conductID</th>
+                    <th class="th-sm">flowID</th>
+                    <th class="th-sm">eventType</th>
+                    <th class="th-sm">eventSubType</th>
+                    <th class="th-sm">expiryTime</th>
+                    <th class="th-sm">eventValues</th>
+                    <th class="th-sm">accuracy</th>
+                    <th class="th-sm">impact</th>
+                    <th class="th-sm">benign</th>
+                    <th class="th-sm">score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                    <tr>
+                        <td>{{ event['_id'] }}</td>
+                        <td>{{ event['uid'] }}</td>
+                        <td>{{ event['eventRaiseTime'] }}</td>
+                        <td>{{ event['conductID'] }}</td>
+                        <td>{{ event['flowID'] }}</td>
+                        <td>{{ event['eventType'] }}</td>
+                        <td>{{ event['eventSubType'] }}</td>
+                        <td>{{ event['expiryTime'] }}</td>
+                        <td>{{ event['eventValues'] }}</td>
+                        <td>{{ event['accuracy'] }}</td>
+                        <td>{{ event['impact'] }}</td>
+                        <td>{{ event['benign'] }}</td>
+                        <td>{{ event['score'] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>
+
+<script>
+    $(document).ready(function () {
+        $('#orderTable').DataTable({
+            "paging" : false
+        });
+        $('.dataTables_length').addClass('bs-select');
+        $('.dataTables_filter input[type="search"]').css({'width':'200px'});
+    });
+</script>
