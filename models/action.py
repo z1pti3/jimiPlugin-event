@@ -55,7 +55,7 @@ class _raiseEvent(action._action):
         data["var"]["event"]["score"] = score
 
         cacheUID = "{0}-{1}-{2}-{3}-{4}".format(data["conductID"],data["flowID"],uid,eventType,eventSubType)
-        foundEvent = cache.globalCache.get("eventCache",cacheUID,getEvent,data["conductID"],data["flowID"],uid,eventType,eventSubType,extendCacheTime=True,customCacheTime=timeToLive)
+        foundEvent = cache.globalCache.get("eventCache",cacheUID,getEvent,data["conductID"],data["flowID"],uid,eventType,eventSubType,extendCacheTime=True,customCacheTime=timeToLive,nullUpdate=True)
         if foundEvent != None:
             if foundEvent.expiryTime > time.time():
                 changes = False
