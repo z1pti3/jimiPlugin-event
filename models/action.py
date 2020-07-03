@@ -22,6 +22,15 @@ class _raiseEvent(action._action):
         cache.globalCache.newCache("eventCache")
         self.bulkClass = db._bulk()
 
+    def __del__(self):
+        events = cache.globalCache.getAll("eventCache")
+        popList = []
+        for eventKey, eventValue in events.items():
+            if eventValue["objectValue"].expiryTime < time.time():
+                popList.append(eventKey)
+        for popItem in popList:
+            cache.globalCache.delete("eventCache",popItem)
+
     def run(self,data,persistentData,actionResult):
         if data["eventStats"]["last"]:
             self.bulkClass.bulkOperatonProcessing()
