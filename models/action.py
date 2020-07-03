@@ -1,7 +1,7 @@
 import time
 from netaddr import IPNetwork, IPAddress
 
-from core import cache, helpers, static, db
+from core import cache, helpers, static, db, logging
 from core.models import action
 from plugins.event.models import event
 
