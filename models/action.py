@@ -66,28 +66,34 @@ class _raiseEvent(action._action):
         cacheUID = "{0}-{1}-{2}-{3}-{4}".format(data["conductID"],data["flowID"],uid,eventType,eventSubType)
         foundEvent = cache.globalCache.get("eventCache",cacheUID,getEvent,data["conductID"],data["flowID"],uid,eventType,eventSubType,extendCacheTime=True,customCacheTime=timeToLive,nullUpdate=True)
         if foundEvent != None:
-            if foundEvent.expiryTime > time.time():
-                changes = False
-                for key,value in eventValues.items():
-                    if key in foundEvent.eventValues:
-                        if value != foundEvent.eventValues[key]:
-                            changes = True
-                            break
-                if changes:
-                    foundEvent.updateRecord(self.bulkClass,eventValues,int( time.time() + timeToLive ),self.history)
+            if foundEvent._id != "":
+                if foundEvent.expiryTime > time.time():
+                    changes = False
+                    for key,value in eventValues.items():
+                        if key in foundEvent.eventValues:
+                            if value != foundEvent.eventValues[key]:
+                                changes = True
+                                break
+                    if changes:
+                        foundEvent.updateRecord(self.bulkClass,eventValues,int( time.time() + timeToLive ),self.history)
+                        actionResult["result"] = True
+                        actionResult["rc"] = 202
+                        return actionResult
+
+                    else:
+                        foundEvent.expiryTime = int(time.time() + timeToLive)
+                        foundEvent.update(["expiryTime"])
+
                     actionResult["result"] = True
-                    actionResult["rc"] = 202
+                    actionResult["rc"] = 302
                     return actionResult
-
                 else:
-                    foundEvent.expiryTime = int(time.time() + timeToLive)
-                    foundEvent.update(["expiryTime"])
-
-                actionResult["result"] = True
-                actionResult["rc"] = 302
-                return actionResult
+                    cache.globalCache.delete("eventCache",cacheUID)
             else:
-                cache.globalCache.delete("eventCache",cacheUID)
+                logging.debug("Event Update Failed - NO ID, actionID='{0}'".format(self._id),7)
+                actionResult["result"] = False
+                actionResult["rc"] = 500
+                return actionResult
         
         eventObject = event._event().bulkNew(self.bulkClass,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,benign,score)
         cache.globalCache.insert("eventCache",cacheUID,eventObject,customCacheTime=timeToLive)
