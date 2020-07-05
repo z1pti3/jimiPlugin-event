@@ -31,10 +31,10 @@ class _raiseEvent(action._action):
         for popItem in popList:
             cache.globalCache.delete("eventCache",popItem)
 
-    def run(self,data,persistentData,actionResult):
-        if data["eventStats"]["last"]:
-            self.bulkClass.bulkOperatonProcessing()
+    def postRun(self):
+        self.bulkClass.bulkOperatonProcessing()
 
+    def run(self,data,persistentData,actionResult):
         eventType = helpers.evalString(self.eventType,{"data" : data})
         eventSubType = helpers.evalString(self.eventSubType,{"data" : data})
         layer = self.layer
@@ -44,6 +44,8 @@ class _raiseEvent(action._action):
         timeToLive = self.timeToLive
         uid = helpers.evalString(self.uid,{"data" : data})
         eventValues = helpers.evalDict(self.eventValues,{"data" : data})
+
+        uid = "{0}-{1}-{2}".format(eventType,eventSubType,uid)
 
         data["var"]["event"] = {}
 
@@ -60,10 +62,10 @@ class _raiseEvent(action._action):
         data["var"]["event"]["impact"] = impact
         data["var"]["event"]["benign"] = benign
 
-        score = int((accuracy*impact)*(benign/10))
+        score = ((accuracy*impact)*(benign/10))
         data["var"]["event"]["score"] = score
 
-        cacheUID = "{0}-{1}-{2}-{3}-{4}".format(data["conductID"],data["flowID"],uid,eventType,eventSubType)
+        cacheUID = "{0}-{1}-{2}".format(data["conductID"],data["flowID"],uid)
         foundEvent = cache.globalCache.get("eventCache",cacheUID,getEvent,data["conductID"],data["flowID"],uid,eventType,eventSubType,extendCacheTime=True,customCacheTime=timeToLive,nullUpdate=True)
         if foundEvent != None:
             if foundEvent._id != "":
@@ -82,7 +84,7 @@ class _raiseEvent(action._action):
 
                     else:
                         foundEvent.expiryTime = int(time.time() + timeToLive)
-                        foundEvent.update(["expiryTime"])
+                        foundEvent.bulkUpdate(["expiryTime"],self.bulkClass)
 
                     actionResult["result"] = True
                     actionResult["rc"] = 302
@@ -95,7 +97,7 @@ class _raiseEvent(action._action):
                 actionResult["rc"] = 500
                 return actionResult
         
-        eventObject = event._event().bulkNew(self.bulkClass,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,benign,score)
+        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,benign,score)
         cache.globalCache.insert("eventCache",cacheUID,eventObject,customCacheTime=timeToLive)
         actionResult["result"] = True
         actionResult["rc"] = 201

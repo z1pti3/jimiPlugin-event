@@ -12,21 +12,24 @@ class _event(db._document):
     eventSubType = str()
     expiryTime = int()
     eventValues = dict()
+    eventFields = list()
     accuracy = float()
     impact = float()
     benign = float()
-    score = int()
+    score = float()
     uid = str()
 
     _dbCollection = db.db["event"]
 
-    def bulkNew(self,bulkClass,conductID,flowID,eventType,eventSubType,expiryTime,eventValues,uid,accuracy,impact,benign,score):
+    def bulkNew(self,bulkClass,acl,conductID,flowID,eventType,eventSubType,expiryTime,eventValues,uid,accuracy,impact,benign,score):
+        self.acl = acl
         self.conductID = conductID
         self.flowID = flowID
         self.eventType = eventType
         self.eventSubType = eventSubType
         self.expiryTime = expiryTime
         self.eventValues = eventValues
+        self.eventFields = list(eventValues.keys())
         self.uid = uid
         self.accuracy = accuracy
         self.impact = impact
@@ -41,7 +44,8 @@ class _event(db._document):
         if history:
             audit._audit().add("event","history",{ "lastUpdate" : self.lastUpdateTime, "endDate" : int(time.time()), "expiryTime" : self.expiryTime, "eventValues" : self.eventValues })
         self.eventValues = eventValues
+        self.eventFields = list(eventValues.keys())
         self.expiryTime = expiryTime
         if self._id != "":
-            self.bulkUpdate(["eventValues","expiryTime"],bulkClass)
+            self.bulkUpdate(["eventValues","expiryTime","eventFields"],bulkClass)
 
