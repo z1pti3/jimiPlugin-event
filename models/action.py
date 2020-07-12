@@ -62,7 +62,7 @@ class _raiseEvent(action._action):
         data["var"]["event"]["impact"] = impact
         data["var"]["event"]["benign"] = benign
 
-        score = ((accuracy*impact)*(benign/10))
+        score = ((accuracy*(impact*layer))/benign)
         data["var"]["event"]["score"] = score
 
         cacheUID = "{0}-{1}-{2}".format(data["conductID"],data["flowID"],uid)
