@@ -76,8 +76,12 @@ class _raiseEvent(action._action):
                             if value != foundEvent.eventValues[key]:
                                 changes = True
                                 break
+                        else:
+                            changes = True
+                            break
+                        
                     if changes:
-                        foundEvent.updateRecord(self.bulkClass,eventValues,int( time.time() + timeToLive ),self.history)
+                        foundEvent.updateRecord(self.bulkClass,eventValues,accuracy,impact,layer,benign,score,int( time.time() + timeToLive ),self.history)
                         actionResult["result"] = True
                         actionResult["rc"] = 202
                         return actionResult
@@ -97,7 +101,7 @@ class _raiseEvent(action._action):
                 actionResult["rc"] = 500
                 return actionResult
         
-        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,benign,score)
+        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score)
         cache.globalCache.insert("eventCache",cacheUID,eventObject,customCacheTime=timeToLive)
         actionResult["result"] = True
         actionResult["rc"] = 201

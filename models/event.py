@@ -15,13 +15,14 @@ class _event(db._document):
     eventFields = list()
     accuracy = float()
     impact = float()
+    layer = float()
     benign = float()
     score = float()
     uid = str()
 
     _dbCollection = db.db["event"]
 
-    def bulkNew(self,bulkClass,acl,conductID,flowID,eventType,eventSubType,expiryTime,eventValues,uid,accuracy,impact,benign,score):
+    def bulkNew(self,bulkClass,acl,conductID,flowID,eventType,eventSubType,expiryTime,eventValues,uid,accuracy,impact,layer,benign,score):
         self.acl = acl
         self.conductID = conductID
         self.flowID = flowID
@@ -33,6 +34,7 @@ class _event(db._document):
         self.uid = uid
         self.accuracy = accuracy
         self.impact = impact
+        self.layer = layer
         self.benign = benign
         self.score = score
 
@@ -40,12 +42,17 @@ class _event(db._document):
 
         return super(_event, self).bulkNew(bulkClass) 
 
-    def updateRecord(self,bulkClass,eventValues,expiryTime,history=False):
+    def updateRecord(self,bulkClass,eventValues,accuracy,impact,layer,benign,score,expiryTime,history=False):
         if history:
-            audit._audit().add("event","history",{ "lastUpdate" : self.lastUpdateTime, "endDate" : int(time.time()), "expiryTime" : self.expiryTime, "eventValues" : self.eventValues })
+            audit._audit().add("event","history",{ "lastUpdate" : self.lastUpdateTime, "endDate" : int(time.time()), "expiryTime" : self.expiryTime, "eventValues" : self.eventValues, "accuracy" : self.accuracy, "impact" : self.impact, "layer" : self.layer, "score" : self.score })
         self.eventValues = eventValues
         self.eventFields = list(eventValues.keys())
         self.expiryTime = expiryTime
+        self.accuracy = accuracy
+        self.impact = impact
+        self.layer = layer
+        self.benign = benign
+        self.score = score
         if self._id != "":
-            self.bulkUpdate(["eventValues","expiryTime","eventFields"],bulkClass)
+            self.bulkUpdate(["eventValues","expiryTime","eventFields","accuracy","impact","layer","benign","score"],bulkClass)
 
