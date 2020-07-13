@@ -43,7 +43,7 @@ class _eventThreshold(trigger._trigger):
         correlationEvents = []
         for relationshipField in relationshipMap:
             for relationship in relationshipMap[relationshipField]:
-                if relationshipMap[relationshipField][relationship]["score"] >= self.minScore:
+                if relationshipMap[relationshipField][relationship]["score"]*(len(relationshipMap[relationshipField][relationship]["eventType"])+len(relationshipMap[relationshipField][relationship]["eventSubType"])) >= self.minScore:
                     correlationEvents.append({ "match" : relationship, "field" : relationshipMap[relationshipField][relationship]["field"], "score" : relationshipMap[relationshipField][relationship]["score"], "corrilationData" : relationshipMap[relationshipField][relationship] })
 
         self.result["events"] = correlationEvents
