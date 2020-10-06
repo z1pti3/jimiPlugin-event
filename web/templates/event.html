@@ -3,19 +3,27 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='includes/datatables/css/dataTables.bootstrap.css') }}">
 <script src="{{ url_for('static', filename='includes/datatables/js/dataTables.bootstrap.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='includes/datatables/css/fixedHeader.dataTables.min.css') }}">
+<script src="{{ url_for('static', filename='includes/datatables/js/dataTables.fixedHeader.min.js') }}"></script>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='includes/bootstrap-3.3.7/css/bootstrap.min.css') }}">
 <script src="{{ url_for('static', filename='includes/bootstrap-3.3.7/js/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='includes/visjs/js/moment.js') }}"></script>
+<script src="{{ url_for('static', filename='includes/datatables/js/datetime.moment.js') }}"></script>
+
+<script src="{{ url_for('static', filename='javascript/helpers.js') }}"></script>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/datatable.css') }}">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='themes/default/default.css') }}">
 
 <html>
     <head>
         
     </head>
-    <body>
-        <table id="orderTable" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
-            <thead>
+    <body class="theme-panelContainer">
+        <table id="orderTable" class="table table-sm theme-table" cellspacing="0" width="100%">
+            <thead class="theme-tableHeader">
                 <tr>
                     <th class="th-sm">_id</th>
                     <th class="th-sm">uid</th>
@@ -33,7 +41,7 @@
                     <th class="th-sm">score</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="theme-tableBody">
                 {% for event in events %}
                     <tr>
                         <td>{{ event['_id'] }}</td>
@@ -60,9 +68,15 @@
 <script>
     $(document).ready(function () {
         $('#orderTable').DataTable({
+            "stripeClasses" : [ 'theme-tableRowOdd', 'theme-tableRowEven' ],
+            fixedHeader: {
+                header: true,
+                footer: true
+            },
             "paging" : false
         });
         $('.dataTables_length').addClass('bs-select');
         $('.dataTables_filter input[type="search"]').css({'width':'200px'});
+        $('.dataTables_filter input[type="search"]').addClass("theme-panelTextbox")
     });
 </script>
