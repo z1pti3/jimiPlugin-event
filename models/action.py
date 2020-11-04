@@ -31,7 +31,7 @@ class _raiseEvent(action._action):
         for popItem in popList:
             cache.globalCache.delete("eventCache",popItem)
 
-    def postRun(self,data,persistentData):
+    def postRun(self):
         self.bulkClass.bulkOperatonProcessing()
 
     def run(self,data,persistentData,actionResult):
