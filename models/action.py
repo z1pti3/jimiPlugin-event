@@ -62,12 +62,21 @@ class _raiseEvent(action._action):
         data["var"]["event"]["impact"] = impact
         data["var"]["event"]["benign"] = benign
 
-        score = ((accuracy*(impact*layer))/benign)
+        try:
+            score = ((accuracy*(impact*layer))/benign)
+        except ZeroDivisionError:
+            score = 0
         data["var"]["event"]["score"] = score
 
         cacheUID = "{0}-{1}-{2}".format(data["conductID"],data["flowID"],uid)
         foundEvent = cache.globalCache.get("eventCache",cacheUID,getEvent,data["conductID"],data["flowID"],uid,eventType,eventSubType,extendCacheTime=True,customCacheTime=timeToLive,nullUpdate=True)
         if foundEvent != None:
+            try:
+                persistentData["plugin"]["event"].append(foundEvent)
+            except:
+                persistentData["plugin"]["event"] = [foundEvent]
+            arrayIndex = len(persistentData["plugin"]["event"])-1
+            actionResult["eventIndex"] = arrayIndex
             if foundEvent._id != "":
                 if foundEvent.expiryTime > time.time():
                     changes = False
@@ -82,6 +91,7 @@ class _raiseEvent(action._action):
                         
                     if changes:
                         foundEvent.updateRecord(self.bulkClass,eventValues,accuracy,impact,layer,benign,score,int( time.time() + timeToLive ),self.history)
+                  
                         actionResult["result"] = True
                         actionResult["rc"] = 202
                         return actionResult
@@ -103,6 +113,12 @@ class _raiseEvent(action._action):
         
         eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score)
         cache.globalCache.insert("eventCache",cacheUID,eventObject,customCacheTime=timeToLive)
+        try:
+            persistentData["plugin"]["event"].append(eventObject)
+        except:
+            persistentData["plugin"]["event"] = [eventObject]
+        arrayIndex = len(persistentData["plugin"]["event"])-1
+        actionResult["eventIndex"] = arrayIndex
         actionResult["result"] = True
         actionResult["rc"] = 201
         return actionResult
@@ -117,6 +133,29 @@ class _raiseEvent(action._action):
         except:
             pass
         return ("internet","internet")
+
+class _eventUpdate(action._action):
+    eventValues = dict()
+    eventIndex = str()
+    updateMode = int()
+
+    def run(self,data,persistentData,actionResult):
+        eventIndex = helpers.evalString(self.eventIndex,{"data" : data})
+        eventValues = helpers.evalDict(self.eventValues,{"data" : data})
+        try:
+            currentEvent = persistentData["plugin"]["event"][eventIndex]
+            if self.updateMode == 0:
+                for key, value in eventValues.items():
+                    currentEvent.eventValues[key] = value
+            elif self.updateMode == 1:
+                currentEvent.eventValues = eventValues
+            actionResult["result"] = True
+            actionResult["rc"] = 0
+        except KeyError:
+            actionResult["result"] = False
+            actionResult["rc"] = 404
+            actionResult["msg"] = "No event found within current flow"
+        return actionResult
 
 def getEvent(cacheUID,sessionData,conductID,flowID,uid,eventType,eventSubType):
     results = event._event().getAsClass(query={ "conductID" : conductID, "flowID" : flowID, "uid" : uid, "eventType" : eventType, "eventSubType" : eventSubType, "expiryTime" : { "$gt" : time.time() } })
