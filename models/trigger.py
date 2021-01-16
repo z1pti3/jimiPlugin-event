@@ -121,4 +121,9 @@ class _eventThreshold(trigger._trigger):
                     break
             loops -= 1
 
-        self.result["events"] = correlatedRelationships
+        events = []
+        for currentCorrelation in correlatedRelationships:
+            if currentCorrelation["score"] > self.minScore:
+                events.append(currentCorrelation)
+
+        self.result["events"] = events
