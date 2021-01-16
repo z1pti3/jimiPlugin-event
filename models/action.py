@@ -134,6 +134,49 @@ class _raiseEvent(action._action):
             pass
         return ("internet","internet")
 
+class _eventUpdateScore(action._action):
+    eventIndex = str()
+    layer = int()
+    accuracy = float()
+    impact = float()
+    benign = float()
+    zeroUpdate = bool()
+
+    def run(self,data,persistentData,actionResult):
+        eventIndex = helpers.evalString(self.eventIndex,{"data" : data})
+        try:
+            currentEvent = persistentData["plugin"]["event"][eventIndex]
+            if self.zeroUpdate:
+                currentEvent.layer = self.layer
+                currentEvent.accuracy = self.accuracy
+                currentEvent.impact = self.impact
+                currentEvent.benign = self.benign
+            else:
+                if self.layer > 0:
+                    currentEvent.layer = self.layer
+                if self.accuracy > 0:
+                    currentEvent.accuracy = self.accuracy
+                if self.impact > 0:
+                    currentEvent.impact = self.impact
+                if self.benign > 0:
+                    currentEvent.benign = self.benign
+            try:
+                score = ((currentEvent.accuracy*(currentEvent.impact*currentEvent.layer))/currentEvent.benign)
+            except ZeroDivisionError:
+                score = 0
+            
+            currentEvent.score = score
+
+            currentEvent.update(["layer","accuracy","impact","benign","score"])
+            actionResult["result"] = True
+            actionResult["rc"] = 0
+            actionResult["score"] = score
+        except KeyError:
+            actionResult["result"] = False
+            actionResult["rc"] = 404
+            actionResult["msg"] = "No event found within current flow"
+        return actionResult
+
 class _eventUpdate(action._action):
     eventValues = dict()
     eventIndex = str()
