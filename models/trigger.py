@@ -1,4 +1,5 @@
 import time
+import copy
 
 from core import cache, helpers, static, db, logging
 from core.models import trigger
@@ -18,32 +19,91 @@ class _eventThreshold(trigger._trigger):
     def check(self):
         eventsAfterTime = time.time() - self.searchTime
         events = event._event().query(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } },fields=["eventType","eventSubType","eventValues","eventFields","score"])["results"]
-        relationshipMap = {}
-        # relationshipMap pass1
+        correlatedRelationships = []
         for eventItem in events:
-            for eventField in self.correlationFields:
-                if eventField in eventItem["eventValues"]:
-                    if eventField not in relationshipMap:
-                        relationshipMap[eventField] = {}
-                    if eventItem["eventValues"][eventField] not in relationshipMap[eventField]:
-                        relationshipMap[eventField][eventItem["eventValues"][eventField]] = { "_ids" : [], "types" : [], "subTypes" : [], "correlations" : {}, "field" : eventField, "score" : 0 }
-                    if eventItem["_id"] not in relationshipMap[eventField][eventItem["eventValues"][eventField]]["_ids"]:
-                        relationshipMap[eventField][eventItem["eventValues"][eventField]]["score"]+=eventItem["score"]
-                        relationshipMap[eventField][eventItem["eventValues"][eventField]]["_ids"].append(eventItem["_id"])
-                    if eventItem["eventType"] not in relationshipMap[eventField][eventItem["eventValues"][eventField]]["types"]:
-                        relationshipMap[eventField][eventItem["eventValues"][eventField]]["types"].append(eventItem["eventType"])
-                    if eventItem["eventSubType"] not in relationshipMap[eventField][eventItem["eventValues"][eventField]]["subTypes"]:
-                        relationshipMap[eventField][eventItem["eventValues"][eventField]]["subTypes"].append(eventItem["eventSubType"])
-                    for eventFieldKey, eventFieldValue in eventItem["eventValues"].items(): 
-                        if eventFieldKey not in relationshipMap[eventField][eventItem["eventValues"][eventField]]["correlations"]:
-                            relationshipMap[eventField][eventItem["eventValues"][eventField]]["correlations"][eventFieldKey] = []
-                        if eventFieldValue not in relationshipMap[eventField][eventItem["eventValues"][eventField]]["correlations"][eventFieldKey]:
-                            relationshipMap[eventField][eventItem["eventValues"][eventField]]["correlations"][eventFieldKey].append(eventFieldValue)
-        # relationshipMap pass2 ( this needs to in future combine multiple field and corrilation types )
-        correlationEvents = []
-        for relationshipField in relationshipMap:
-            for relationship in relationshipMap[relationshipField]:
-                if relationshipMap[relationshipField][relationship]["score"]*(len(relationshipMap[relationshipField][relationship]["types"])+len(relationshipMap[relationshipField][relationship]["subTypes"])-1) >= self.minScore:
-                    correlationEvents.append({ "match" : relationship, "field" : relationshipMap[relationshipField][relationship]["field"], "score" : relationshipMap[relationshipField][relationship]["score"], "corrilationData" : relationshipMap[relationshipField][relationship] })
+            createNew = True
+            for correlatedRelationship in correlatedRelationships:
+                for eventField in self.correlationFields:
+                    if type(eventItem["eventValues"][eventField]) is list:
+                        for eventFieldItem in eventItem["eventValues"][eventField]:
+                            if eventFieldItem in correlatedRelationship["correlations"][eventField]:
+                                createNew = False
+                                break
+                        if not createNew:
+                            break
+                    else:
+                        if eventItem["eventValues"][eventField] in correlatedRelationship["correlations"][eventField]:
+                            createNew = False
+                            break
+                if not createNew:
+                    for eventField in self.correlationFields:
+                        if type(eventItem["eventValues"][eventField]) is list:
+                            for eventFieldItem in eventItem["eventValues"][eventField]:
+                                if eventField not in correlatedRelationship["correlations"]:
+                                    correlatedRelationship["correlations"][eventField] = []
+                                if eventFieldItem not in correlatedRelationship["correlations"][eventField]:
+                                    correlatedRelationship["correlations"][eventField].append(eventFieldItem)
+                        else:
+                            if eventField not in correlatedRelationship["correlations"]:
+                                correlatedRelationship["correlations"][eventField] = []
+                            if eventItem["eventValues"][eventField] not in correlatedRelationship["correlations"][eventField]:
+                                correlatedRelationship["correlations"][eventField].append(eventItem["eventValues"][eventField])
+                    if eventItem["_id"] not in correlatedRelationship["ids"]:
+                        correlatedRelationship["ids"].append(eventItem["_id"])
+                        correlatedRelationship["score"] += eventItem["score"]
+                    if eventItem["eventType"] not in correlatedRelationship["types"]:
+                        correlatedRelationship["types"].append(eventItem["eventType"])
+                    if eventItem["eventSubType"] not in correlatedRelationship["subTypes"]:
+                        correlatedRelationship["subTypes"].append(eventItem["eventSubType"])
+            if createNew:
+                correlatedRelationships.append( { "ids" : [eventItem["_id"]], "types" : [eventItem["eventType"]], "subTypes" : [eventItem["eventSubType"]], "correlations" : {}, "score" : eventItem["score"]  } )
+                correlatedRelationship = correlatedRelationships[-1]
+                for eventField in self.correlationFields:
+                    if type(eventItem["eventValues"][eventField]) is list:
+                        for eventFieldItem in eventItem["eventValues"][eventField]:
+                            if eventField not in correlatedRelationship["correlations"]:
+                                correlatedRelationship["correlations"][eventField] = []
+                            if eventFieldItem not in correlatedRelationship["correlations"][eventField]:
+                                correlatedRelationship["correlations"][eventField].append(eventFieldItem)
+                    else:
+                        if eventField not in correlatedRelationship["correlations"]:
+                            correlatedRelationship["correlations"][eventField] = []
+                        if eventItem["eventValues"][eventField] not in correlatedRelationship["correlations"][eventField]:
+                            correlatedRelationship["correlations"][eventField].append(eventItem["eventValues"][eventField])
 
-        self.result["events"] = correlationEvents
+        loops = 1
+        while (loops > 0):
+            merged = False
+            for currentCorrelation in correlatedRelationships:
+                for correlatedRelationship in correlatedRelationships:
+                    if correlatedRelationship != currentCorrelation:
+                        for eventField in self.correlationFields:
+                            for eventValue in currentCorrelation["correlations"][eventField]:
+                                # Detecting correlations 
+                                if eventValue in correlatedRelationship["correlations"][eventField]:
+                                    merged = True
+                                    break
+                            if merged:
+                                break
+                        if merged:
+                            # Merging events
+                            for eventField in self.correlationFields:
+                                for eventValue in currentCorrelation["correlations"][eventField]:
+                                    if eventValue not in correlatedRelationship["correlations"][eventField]:
+                                        for eventField in self.correlationFields:
+                                            for eventFieldItem in currentCorrelation["correlations"][eventField]:
+                                                if eventFieldItem not in correlatedRelationship["correlations"][eventField]:
+                                                    correlatedRelationship["correlations"][eventField].append(eventFieldItem)
+                            for mergeKey in ["ids","types","subTypes"]:
+                                for value in currentCorrelation[mergeKey]:
+                                    if value not in correlatedRelationship[mergeKey]:
+                                        correlatedRelationship[mergeKey].append(value)
+                            correlatedRelationship["score"] += currentCorrelation["score"]
+                            break
+                if merged:
+                    correlatedRelationships.remove(currentCorrelation)
+                    loops += 1
+                    break
+            loops -= 1
+
+        self.result["events"] = correlatedRelationships
