@@ -61,6 +61,7 @@ class _eventThreshold(trigger._trigger):
                         correlatedRelationship["types"].append(eventItem["eventType"])
                     if eventItem["eventSubType"] not in correlatedRelationship["subTypes"]:
                         correlatedRelationship["subTypes"].append(eventItem["eventSubType"])
+                    break
             if createNew:
                 correlatedRelationships.append( { "ids" : [eventItem["_id"]], "types" : [eventItem["eventType"]], "subTypes" : [eventItem["eventSubType"]], "correlations" : {}, "score" : eventItem["score"]  } )
                 correlatedRelationship = correlatedRelationships[-1]
