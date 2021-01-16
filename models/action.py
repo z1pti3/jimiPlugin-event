@@ -149,6 +149,7 @@ class _eventUpdate(action._action):
                     currentEvent.eventValues[key] = value
             elif self.updateMode == 1:
                 currentEvent.eventValues = eventValues
+            currentEvent.update(["eventValues"])
             actionResult["result"] = True
             actionResult["rc"] = 0
         except KeyError:
