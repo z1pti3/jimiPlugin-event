@@ -1,0 +1,183 @@
+<script src="{{ url_for('static', filename='includes/jquery/js/jquery-3.4.1.js') }}"></script>
+<script src="{{ url_for('static', filename='includes/jquery/js/jquery-ui-1.12.1.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='includes/jquery/css/jquery-ui.theme.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='includes/jquery/css/jquery-ui.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='includes/jquery/css/jquery-ui.structure.css') }}">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='includes/bootstrap-3.3.7/css/bootstrap.min.css') }}">
+<script src="{{ url_for('static', filename='includes/bootstrap-3.3.7/js/bootstrap.min.js') }}"></script>
+
+<script src="{{ url_for('static', filename='includes/visjs/js/vis-network.min.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/objectProperties.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='themes/default/default.css') }}">
+
+
+<script>
+    var CSRF = "{{CSRF}}"
+</script>
+
+<html>
+    <head>
+        
+    </head>
+    <body class="theme-panelContainer">
+        <div class="flowchart theme-content" id="map"></div>
+    </body>
+</html>
+
+<script>
+    $( document ).ready(function() {
+        $.ajax({url:"get/", type:"GET", success: function ( result ) {
+                network(result,"map")
+            }
+        });
+    })
+</script>
+
+<script>
+
+    var panelRelationshipHTML = `
+    <div class="propertiesPanel theme-panelContainer">
+        <div class="propertiesPanel-header theme-panelHeader">
+            <span class="glyphicon glyphicon glyphicon-remove" id="close"></span>
+            <label id="title"></label>
+        </div>
+        <div class="propertiesPanel-body theme-panelBody">
+        <textarea id="openRelationshipPanelValue" class="inputFullWidth theme-panelTextArea"></textarea>
+        </div>
+        <div class="propertiesPanel-footer theme-panelFooter">
+            <button id="close" class="btn btn-primary theme-panelButton">Close</button>
+        </div>
+    </div>
+    `
+
+    var openLinkPanels = {}
+    function openRelationshipPanel(id) {
+        panelID = id
+        if (!openLinkPanels.hasOwnProperty(panelID)) {
+            openLinkPanels[panelID] = panelID;
+            var e = window.event;
+            var posX = e.clientX;
+            var posY = e.clientY;
+            var panel = $(panelRelationshipHTML);
+            panel.css({top : posY, left : posX + 35});
+            panel.draggable();
+            panel.resizable({
+                grid: 20
+            });
+
+            // Events
+            panel.click(function () {
+                $('.ui-main').find(".propertiesPanel").css("z-index", 1);
+                $(this).css("z-index", 2);
+            })
+
+            panel.find("#close").click(function () { 
+                delete openLinkPanels[panelID];
+                panel.remove();
+            })
+
+            $.ajax({url:"/plugin/event/"+id+"/", type:"GET", success: function ( result ) {
+                    panel.find("#openRelationshipPanelValue").val(JSON.stringify(result));
+                }
+            });
+
+            // Applying object to UI
+            $('#map').append(panel);
+
+        }
+    }
+
+    function network(loadData,HTMLElementID) {
+            var network = null;
+            var mapping = {};
+            var dataMapping = {}
+            var nodes = [];
+            var edges = [];
+            var edgeMapping = {};
+            var finalNodes = []
+            for (d in loadData) {
+                var source = loadData[d]["source"]
+                var target = loadData[d]["target"]
+
+                var b = null;
+                var a = null;
+                var color = "#4090c9";
+
+                if (!mapping.hasOwnProperty(source)) {
+                    id = nodes.length;
+                    nodes.push({ id: id, label: source, value: 1, color : color });
+                    mapping[source] = { id :  id };
+                }
+                a = mapping[source]
+
+                if (!mapping.hasOwnProperty(target)) {
+                    id = nodes.length;
+                    nodes.push({ id: id, label: target, value: 1, color : color });
+                    mapping[target] = { id :  id };
+                }
+                b = mapping[target]
+
+
+                if (a["id"] != b["id"]) {
+                    var key = a["id"]+"->"+b["id"];
+                    var key2 = b["id"]+"->"+a["id"];
+                    if ((!edgeMapping.hasOwnProperty(key)) && (!edgeMapping.hasOwnProperty(key2))) {
+                        edgeMapping[key] = 1;
+                        edgeMapping[key2] = 1;
+                        edges.push({ 
+                            from: a["id"], 
+                            to: b["id"],
+                            id: source+"->"+target,
+                            title: JSON.stringify(loadData[d]["matches"])
+                        });
+                    }
+                }
+            }
+            
+            var container = document.getElementById(HTMLElementID);
+            var data = {
+                nodes: nodes,
+                edges: edges
+            };
+            var options = {
+                physics: {
+                    barnesHut: {gravitationalConstant: -8000, springConstant: 0.1, springLength: 500},      
+                timestep: 0.2,
+                },    
+                nodes: {
+                shape: "dot",
+                scaling: {
+                    min: 25,
+                    max: 25,
+                },
+                font: {
+                    size: 30,
+                    face: "Tahoma",
+                    color: "#bfbfbf"
+                },
+                },
+                edges: {
+                    width: 5,
+                    color: { inherit: "from" },
+                    smooth: {
+                        type: "continuous",
+                    },
+                    arrows: {
+                        to: {
+                            enabled: true
+                        }
+                    }
+                }
+        };
+        network = new vis.Network(container, data, options);
+        network.on("doubleClick", function(params) {
+            if ((params["nodes"].length == 1)) {
+                openRelationshipPanel(nodes[params["nodes"][0]]["label"])
+            }
+            return true;
+        });
+    }
+</script>
