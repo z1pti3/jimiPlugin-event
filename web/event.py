@@ -38,7 +38,7 @@ def getEventCorrelation(eventCorrelationID):
                         if fieldValue in targetEvent["eventValues"][field]:
                             mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
                             if mapKey not in correlationMap:
-                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [], "sourceLevel" : sourceEvent["eventRaiseTime"], "targetLevel" : targetEvent["eventRaiseTime"] }
+                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [], "sourceUID" : sourceEvent["uid"], "targetUID" : targetEvent["uid"], "sourceValues" : sourceEvent["eventValues"], "targetValues" : targetEvent["eventValues"], "sourceLevel" : sourceEvent["eventRaiseTime"], "targetLevel" : targetEvent["eventRaiseTime"] }
                                 if sourceEvent["eventRaiseTime"] not in timeMap:
                                     timeMap.append(sourceEvent["eventRaiseTime"])
                                 if targetEvent["eventRaiseTime"] not in timeMap:
@@ -48,7 +48,7 @@ def getEventCorrelation(eventCorrelationID):
                         if fieldValue == targetEvent["eventValues"][field]:
                             mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
                             if mapKey not in correlationMap:
-                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] , "sourceLevel" : sourceEvent["eventRaiseTime"], "targetLevel" : targetEvent["eventRaiseTime"] }
+                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [], "sourceUID" : sourceEvent["uid"], "targetUID" : targetEvent["uid"], "sourceValues" : sourceEvent["eventValues"], "targetValues" : targetEvent["eventValues"], "sourceLevel" : sourceEvent["eventRaiseTime"], "targetLevel" : targetEvent["eventRaiseTime"] }
                                 if sourceEvent["eventRaiseTime"] not in timeMap:
                                     timeMap.append(sourceEvent["eventRaiseTime"])
                                 if targetEvent["eventRaiseTime"] not in timeMap:

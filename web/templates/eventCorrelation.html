@@ -107,14 +107,14 @@
 
                 if (!mapping.hasOwnProperty(source)) {
                     id = nodes.length;
-                    nodes.push({ id: id, label: source, value: 1, x: loadData[d]["sourceLevel"], y: Math.floor(Math.random() * 1000) });
+                    nodes.push({ id: id, uid: source, title: JSON.stringify(loadData[d]["sourceValues"]), label: loadData[d]["sourceUID"], value: 1, x: loadData[d]["sourceLevel"], y: Math.floor(Math.random() * 1000) });
                     mapping[source] = { id :  id };
                 }
                 a = mapping[source]
 
                 if (!mapping.hasOwnProperty(target)) {
                     id = nodes.length;
-                    nodes.push({ id: id, label: target, value: 1, x: loadData[d]["targetLevel"], y: Math.floor(Math.random() * 1000) });
+                    nodes.push({ id: id, uid: target, title: JSON.stringify(loadData[d]["targetValues"]), label: loadData[d]["targetUID"], value: 1, x: loadData[d]["targetLevel"], y: Math.floor(Math.random() * 1000) });
                     mapping[target] = { id :  id };
                 }
                 b = mapping[target]
@@ -143,13 +143,7 @@
             };
             var options = {
                 physics: {
-                    solver: "repulsion",
-                    repulsion: {
-                        nodeDistance: 100,
-                        springLength: 400,
-                        springConstant: 0.1,
-                        centralGravity: 1
-                    }
+                    enabled: false
                 },
                 nodes: {
                     shape: "dot",
@@ -179,9 +173,6 @@
                         size: 30,
                         face: "Tahoma",
                         color: "#bfbfbf"
-                    },
-                    fixed: {
-                        x: true
                     }
                 },
                 edges: {
@@ -203,7 +194,7 @@
         network = new vis.Network(container, data, options);
         network.on("doubleClick", function(params) {
             if ((params["nodes"].length == 1)) {
-                openRelationshipPanel(nodes[params["nodes"][0]]["label"])
+                openRelationshipPanel(nodes[params["nodes"][0]]["uid"])
             }
             return true;
         });
