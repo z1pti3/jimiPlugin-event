@@ -98,39 +98,32 @@
             var edges = [];
             var edgeMapping = {};
             var finalNodes = []
-            for (d in loadData) {
-                var source = loadData[d]["source"]
-                var target = loadData[d]["target"]
+            var y = Math.floor(Math.random() * 1000);
 
-                var b = null;
-                var a = null;
-
-                if (!mapping.hasOwnProperty(source)) {
+            for (d in loadData["nodes"]) {
+                if (!mapping.hasOwnProperty(d)) {
                     id = nodes.length;
-                    nodes.push({ id: id, uid: source, title: JSON.stringify(loadData[d]["sourceValues"]), label: loadData[d]["sourceUID"], value: 1, x: loadData[d]["sourceLevel"], y: Math.floor(Math.random() * 1000) });
-                    mapping[source] = { id :  id };
+                    nodes.push({ id: id, uid: loadData["nodes"][d]["_id"], title: JSON.stringify(loadData["nodes"][d]["eventValues"]), label: d, value: 1, x: loadData["nodes"][d]["x"], y: loadData["nodes"][d]["y"] });
+                    mapping[d] = { id :  id };
                 }
-                a = mapping[source]
+            }
 
-                if (!mapping.hasOwnProperty(target)) {
-                    id = nodes.length;
-                    nodes.push({ id: id, uid: target, title: JSON.stringify(loadData[d]["targetValues"]), label: loadData[d]["targetUID"], value: 1, x: loadData[d]["targetLevel"], y: Math.floor(Math.random() * 1000) });
-                    mapping[target] = { id :  id };
-                }
-                b = mapping[target]
 
+            for (d in loadData["edges"]) {
+                a = mapping[loadData["edges"][d]["source"]]
+                b = mapping[loadData["edges"][d]["target"]]
 
                 if (a["id"] != b["id"]) {
-                    var key = a["id"]+"->"+b["id"];
-                    var key2 = b["id"]+"->"+a["id"];
-                    if ((!edgeMapping.hasOwnProperty(key)) && (!edgeMapping.hasOwnProperty(key2))) {
+                    var key = loadData["edges"][d]["source"]+"->"+loadData["edges"][d]["target"];
+                    var key2 = loadData["edges"][d]["target"]+"->"+loadData["edges"][d]["source"];
+                    if (!edgeMapping.hasOwnProperty(key) && !edgeMapping.hasOwnProperty(key2)) {
                         edgeMapping[key] = 1;
                         edgeMapping[key2] = 1;
                         edges.push({ 
                             from: a["id"], 
                             to: b["id"],
-                            id: source+"->"+target,
-                            title: JSON.stringify(loadData[d]["matches"])
+                            id: key,
+                            title: JSON.stringify(loadData["edges"][d]["matches"])
                         });
                     }
                 }
