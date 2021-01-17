@@ -225,6 +225,7 @@ class _eventBuildCorrelations(action._action):
     expiryTime = 86400
     oldestEvent = 86400
     correlationFields = list()
+    alwaysProcessEvents = bool()
 
     def run(self,data,persistentData,actionResult):
         correlationName = helpers.evalString(self.correlationName,{"data" : data})
@@ -232,7 +233,20 @@ class _eventBuildCorrelations(action._action):
 
         correlatedRelationships = event._eventCorrelation().getAsClass(query={ "correlationName" : correlationName, "expiryTime" : { "$gt" : int(time.time()) } })
         eventsAfterTime = int(time.time()) - self.oldestEvent
-        events = event._event().getAsClass(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
+        if not self.alwaysProcessEvents:
+            ids = []
+            for correlatedRelationship in correlatedRelationships:
+                for idItem in correlatedRelationship.ids:
+                    ids.append(db.ObjectId(idItem))
+            events = event._event().getAsClass(query={ "_id" : { "$nin" : ids }, "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
+            if len(events) == 0:
+                actionResult["result"] = True
+                actionResult["rc"] = 200
+                actionResult["correlatedEvents"] = { "created" : [], "updated" : [], "deleted" : [] }
+                actionResult["msg"] = "No new events found to process"
+                return actionResult
+        else:
+            events = event._event().getAsClass(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
         correlatedRelationshipsUpdated = []
         correlatedRelationshipsCreated = []
         correlatedRelationshipsDeleted = []
