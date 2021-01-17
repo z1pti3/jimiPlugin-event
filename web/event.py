@@ -29,22 +29,23 @@ def getEventCorrelation(eventCorrelationID):
     eventCorrelation = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,id=eventCorrelationID)[0]
     correlationMap = {}
     for sourceEvent, targetEvent in ((sourceEvent, targetEvent) for sourceEvent in eventCorrelation.events for targetEvent in eventCorrelation.events):
-        for field, fieldValue in sourceEvent["eventValues"].items():
-            try:
-                if type(targetEvent["eventValues"][field]) is list:
-                    if fieldValue in targetEvent["eventValues"][field]:
-                        mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
-                        if mapKey not in correlationMap:
-                            correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] }
-                        correlationMap[mapKey]["matches"].append([field,fieldValue])
-                else:
-                    if fieldValue == targetEvent["eventValues"][field]:
-                        mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
-                        if mapKey not in correlationMap:
-                            correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] }
-                        correlationMap[mapKey]["matches"].append([field,fieldValue])
-            except KeyError:
-                pass
+        if sourceEvent["uid"] != targetEvent["uid"]:
+            for field, fieldValue in sourceEvent["eventValues"].items():
+                try:
+                    if type(targetEvent["eventValues"][field]) is list:
+                        if fieldValue in targetEvent["eventValues"][field]:
+                            mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
+                            if mapKey not in correlationMap:
+                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] }
+                            correlationMap[mapKey]["matches"].append([field,fieldValue])
+                    else:
+                        if fieldValue == targetEvent["eventValues"][field]:
+                            mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
+                            if mapKey not in correlationMap:
+                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] }
+                            correlationMap[mapKey]["matches"].append([field,fieldValue])
+                except KeyError:
+                    pass
     return correlationMap, 200
 
 
