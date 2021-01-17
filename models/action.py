@@ -204,6 +204,7 @@ class _eventUpdate(action._action):
 class _eventGetCorrelations(action._action):
     correlationName = str()
     includeInactive = bool()
+    excludeSingleTypes = bool()
     minScore = float()
 
     def run(self,data,persistentData,actionResult):
@@ -212,6 +213,8 @@ class _eventGetCorrelations(action._action):
         if self.includeInactive:
             expiryTime = 0
         correlatedRelationships = event._eventCorrelation().query(query={ "correlationName" : correlationName, "score" : { "$gt" : self.minScore }, "expiryTime" : { "$gt" : expiryTime } })["results"]
+        if self.excludeSingleTypes:
+            correlatedRelationships = [ x for x in correlatedRelationships if len(x["types"]) > 1 or len(x["subTypes"]) > 1 ]
         actionResult["result"] = True
         actionResult["rc"] = 0
         actionResult["correlations"] = correlatedRelationships
