@@ -104,18 +104,17 @@
 
                 var b = null;
                 var a = null;
-                var color = "#4090c9";
 
                 if (!mapping.hasOwnProperty(source)) {
                     id = nodes.length;
-                    nodes.push({ id: id, label: source, value: 1, color : color });
+                    nodes.push({ id: id, label: source, value: 1, x: loadData[d]["sourceLevel"], y: Math.floor(Math.random() * 1000) });
                     mapping[source] = { id :  id };
                 }
                 a = mapping[source]
 
                 if (!mapping.hasOwnProperty(target)) {
                     id = nodes.length;
-                    nodes.push({ id: id, label: target, value: 1, color : color });
+                    nodes.push({ id: id, label: target, value: 1, x: loadData[d]["targetLevel"], y: Math.floor(Math.random() * 1000) });
                     mapping[target] = { id :  id };
                 }
                 b = mapping[target]
@@ -144,24 +143,53 @@
             };
             var options = {
                 physics: {
-                    barnesHut: {gravitationalConstant: -8000, springConstant: 0.1, springLength: 500},      
-                timestep: 0.2,
-                },    
+                    solver: "repulsion",
+                    repulsion: {
+                        nodeDistance: 100,
+                        springLength: 400,
+                        springConstant: 0.1,
+                        centralGravity: 1
+                    }
+                },
                 nodes: {
-                shape: "dot",
-                scaling: {
-                    min: 25,
-                    max: 25,
-                },
-                font: {
-                    size: 30,
-                    face: "Tahoma",
-                    color: "#bfbfbf"
-                },
+                    shape: "dot",
+                    scaling: {
+                        min: 25,
+                        max: 25,
+                    },
+                    color: {
+                        background: "#4090c9",
+                        highlight: {
+                            background: "#000",
+                            border: "#FFF"
+                        },
+                        hover: {
+                            background: "#000",
+                            border: "#FFF"
+                        }
+                    },
+                    shadow:{
+                        enabled: true,
+                        color: 'rgba(0,0,0,0.5)',
+                        size:10,
+                        x:5,
+                        y:5
+                    },
+                    font: {
+                        size: 30,
+                        face: "Tahoma",
+                        color: "#bfbfbf"
+                    },
+                    fixed: {
+                        x: true
+                    }
                 },
                 edges: {
-                    width: 5,
-                    color: { inherit: "from" },
+                    width: 3,
+                    color: {
+                        color: "#4090c9",
+                        highlight: "#FFF",
+                    },
                     smooth: {
                         type: "continuous",
                     },

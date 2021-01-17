@@ -28,6 +28,8 @@ def eventCorrelationPage(eventCorrelationID):
 def getEventCorrelation(eventCorrelationID):
     eventCorrelation = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,id=eventCorrelationID)[0]
     correlationMap = {}
+    timeMap = []
+    level = 0
     for sourceEvent, targetEvent in ((sourceEvent, targetEvent) for sourceEvent in eventCorrelation.events for targetEvent in eventCorrelation.events):
         if sourceEvent["uid"] != targetEvent["uid"]:
             for field, fieldValue in sourceEvent["eventValues"].items():
@@ -36,16 +38,29 @@ def getEventCorrelation(eventCorrelationID):
                         if fieldValue in targetEvent["eventValues"][field]:
                             mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
                             if mapKey not in correlationMap:
-                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] }
+                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [], "sourceLevel" : sourceEvent["eventRaiseTime"], "targetLevel" : targetEvent["eventRaiseTime"] }
+                                if sourceEvent["eventRaiseTime"] not in timeMap:
+                                    timeMap.append(sourceEvent["eventRaiseTime"])
+                                if targetEvent["eventRaiseTime"] not in timeMap:
+                                    timeMap.append(targetEvent["eventRaiseTime"])
                             correlationMap[mapKey]["matches"].append([field,fieldValue])
                     else:
                         if fieldValue == targetEvent["eventValues"][field]:
                             mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
                             if mapKey not in correlationMap:
-                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] }
+                                correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] , "sourceLevel" : sourceEvent["eventRaiseTime"], "targetLevel" : targetEvent["eventRaiseTime"] }
+                                if sourceEvent["eventRaiseTime"] not in timeMap:
+                                    timeMap.append(sourceEvent["eventRaiseTime"])
+                                if targetEvent["eventRaiseTime"] not in timeMap:
+                                    timeMap.append(targetEvent["eventRaiseTime"])
                             correlationMap[mapKey]["matches"].append([field,fieldValue])
                 except KeyError:
                     pass
+    timeMap.sort()
+    for key, item in correlationMap.items():
+        item["sourceLevel"] = timeMap.index(item["sourceLevel"])*500
+        item["targetLevel"] = timeMap.index(item["targetLevel"])*500
+
     return correlationMap, 200
 
 
