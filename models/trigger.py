@@ -21,4 +21,4 @@ class _eventThreshold(trigger._trigger):
         expiryTime = int(time.time())
         if self.includeInactive:
             expiryTime = 0
-        self.result["events"] = event._eventCorrelation().query(query={ "correlationName" : correlationName, "score" : { "$gt" : self.minScore }, "expiryTime" : { "$gt" : expiryTime) } })["results"]
+        self.result["events"] = event._eventCorrelation().query(query={ "correlationName" : correlationName, "score" : { "$gt" : self.minScore }, "expiryTime" : { "$gt" : expiryTime } })["results"]

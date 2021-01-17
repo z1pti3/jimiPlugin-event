@@ -4,6 +4,7 @@ from core import db, helpers, logging, audit
 
 class _eventCorrelation(db._document):
     correlationName = str()
+    events = list()
     ids = list()
     types = list()
     subTypes = list()
@@ -14,7 +15,7 @@ class _eventCorrelation(db._document):
 
     _dbCollection = db.db["eventCorrelation"]
 
-    def new(self,acl,correlationName,expiryTime,ids,types,subTypes,correlations,score):
+    def new(self,acl,correlationName,expiryTime,ids,types,subTypes,correlations,events,score):
         self.acl = acl
         self.correlationName = correlationName
         self.expiryTime = int(time.time()) + expiryTime
@@ -22,6 +23,7 @@ class _eventCorrelation(db._document):
         self.types = types
         self.subTypes = subTypes
         self.correlations = correlations
+        self.events = events
         self.score = score
         self.correlationLastUpdate = int(time.time())
         return super(_eventCorrelation, self).new()

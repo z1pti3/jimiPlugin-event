@@ -211,7 +211,7 @@ class _eventGetCorrelations(action._action):
         expiryTime = int(time.time())
         if self.includeInactive:
             expiryTime = 0
-        correlatedRelationships = event._eventCorrelation().query(query={ "correlationName" : correlationName, "score" : { "$gt" : self.minScore }, "expiryTime" : { "$gt" : expiryTime) } })["results"]
+        correlatedRelationships = event._eventCorrelation().query(query={ "correlationName" : correlationName, "score" : { "$gt" : self.minScore }, "expiryTime" : { "$gt" : expiryTime } })["results"]
         actionResult["result"] = True
         actionResult["rc"] = 0
         actionResult["correlations"] = correlatedRelationships
@@ -229,7 +229,7 @@ class _eventBuildCorrelations(action._action):
 
         correlatedRelationships = event._eventCorrelation().getAsClass(query={ "correlationName" : correlationName, "expiryTime" : { "$gt" : int(time.time()) } })
         eventsAfterTime = int(time.time()) - self.oldestEvent
-        events = event._event().getAsClass(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } },fields=["eventType","eventSubType","eventValues","eventFields","score"])
+        events = event._event().getAsClass(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
         correlatedRelationshipsUpdated = []
         correlatedRelationshipsCreated = []
         correlatedRelationshipsDeleted = []
@@ -269,7 +269,7 @@ class _eventBuildCorrelations(action._action):
                     except KeyError:
                             pass
                 newEventCorrelation = event._eventCorrelation()
-                newEventCorrelation.new(self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,eventItem.score)
+                newEventCorrelation.new(self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,[helpers.classToJson(eventItem,hidden=True)],eventItem.score)
                 correlatedRelationships.append(newEventCorrelation)
                 correlatedRelationshipsCreated.append(newEventCorrelation)
             # Merge existing
@@ -294,6 +294,7 @@ class _eventBuildCorrelations(action._action):
                         pass
                 if eventItem._id not in foundCorrelatedRelationship.ids:
                     foundCorrelatedRelationship.ids.append(eventItem._id)
+                    foundCorrelatedRelationship.events.append(helpers.classToJson(eventItem,hidden=True))
                     foundCorrelatedRelationship.score += eventItem.score
                     change = True
                 if eventItem.eventType not in foundCorrelatedRelationship.types:
@@ -335,6 +336,12 @@ class _eventBuildCorrelations(action._action):
                             for value in getattr(currentCorrelation,mergeKey):
                                 if value not in getattr(correlatedRelationship,mergeKey):
                                     getattr(correlatedRelationship,mergeKey).append(value)
+                                    # Append missing events only when a new event _id is added
+                                    if mergeKey == "ids":
+                                        for eventItem in currentCorrelation.events:
+                                            matchFound = [ x for x in correlatedRelationship.events if x["_id"] == eventItem["_id"] ]
+                                            if len(matchFound) == 0:
+                                                correlatedRelationship.events.append(eventItem)
                         correlatedRelationship.score += currentCorrelation.score
                         correlatedRelationship.correlationLastUpdate = int(time.time())
                         correlatedRelationship.expiryTime = expiryTime
@@ -353,13 +360,13 @@ class _eventBuildCorrelations(action._action):
                         break
             loops -= 1
 
-        created = [ helpers.classToJson(x) for x in correlatedRelationshipsCreated ]
+        created = [ helpers.classToJson(x,hidden=True) for x in correlatedRelationshipsCreated ]
         updated = []
         for correlatedRelationshipUpdated in correlatedRelationshipsUpdated:
-            correlatedRelationshipUpdated.update(["expiryTime","ids","types","subTypes","correlations","score"])
+            correlatedRelationshipUpdated.update(["expiryTime","ids","types","subTypes","correlations","score","events"])
             if correlatedRelationshipUpdated not in correlatedRelationshipsCreated:
-                updated.append(helpers.classToJson(correlatedRelationshipUpdated))
-        deleted = [ helpers.classToJson(x) for x in correlatedRelationshipsDeleted ]
+                updated.append(helpers.classToJson(correlatedRelationshipUpdated,hidden=True))
+        deleted = [ helpers.classToJson(x,hidden=True) for x in correlatedRelationshipsDeleted ]
 
         actionResult["result"] = True
         actionResult["rc"] = 0
