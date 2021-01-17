@@ -8,6 +8,7 @@ from plugins.event.models import event
 class _eventThreshold(trigger._trigger):
     correlationName = str()
     includeInactive = bool()
+    excludeSingleTypes = bool()
     minScore = float()
 
     def __init__(self):
