@@ -31,11 +31,18 @@ def getEventCorrelation(eventCorrelationID):
     for sourceEvent, targetEvent in ((sourceEvent, targetEvent) for sourceEvent in eventCorrelation.events for targetEvent in eventCorrelation.events):
         for field, fieldValue in sourceEvent["eventValues"].items():
             try:
-                if fieldValue in targetEvent["eventValues"][field]:
-                    mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
-                    if mapKey not in correlationMap:
-                        correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] }
-                    correlationMap[mapKey]["matches"].append([field,fieldValue])
+                if type(targetEvent["eventValues"][field]) is list:
+                    if fieldValue in targetEvent["eventValues"][field]:
+                        mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
+                        if mapKey not in correlationMap:
+                            correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] }
+                        correlationMap[mapKey]["matches"].append([field,fieldValue])
+                else:
+                    if fieldValue == targetEvent["eventValues"][field]:
+                        mapKey = "{0}->{1}".format(sourceEvent["_id"],targetEvent["_id"])
+                        if mapKey not in correlationMap:
+                            correlationMap[mapKey] = { "source" : sourceEvent["_id"], "target" : targetEvent["_id"], "matches" : [] }
+                        correlationMap[mapKey]["matches"].append([field,fieldValue])
             except KeyError:
                 pass
     return correlationMap, 200
