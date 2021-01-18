@@ -48,7 +48,7 @@ class _raiseEvent(action._action):
         uid = helpers.evalString(self.uid,{"data" : data})
         eventValues = helpers.evalDict(self.eventValues,{"data" : data})
 
-        uid = "{0}-{1}-{2}".format(self._id,eventType,eventSubType,uid)
+        uid = "{0}-{1}-{2}-{3}".format(self._id,eventType,eventSubType,uid)
 
         data["var"]["event"] = {}
 
