@@ -46,7 +46,7 @@ class _raiseEvent(action._action):
         benign = self.benign
         timeToLive = self.timeToLive
         uid = helpers.evalString(self.uid,{"data" : data})
-        eventValues = helpers.evalDict(self.eventValues,{"data" : data})
+        eventValues = helpers.unicodeEscapeDict(helpers.evalDict(self.eventValues,{"data" : data}))
 
         uid = "{0}-{1}-{2}".format(self._id,eventType,eventSubType,uid)
 
@@ -187,7 +187,7 @@ class _eventUpdate(action._action):
 
     def run(self,data,persistentData,actionResult):
         eventIndex = helpers.evalString(self.eventIndex,{"data" : data})
-        eventValues = helpers.evalDict(self.eventValues,{"data" : data})
+        eventValues = helpers.unicodeEscapeDict(helpers.evalDict(self.eventValues,{"data" : data}))
         try:
             currentEvent = persistentData["plugin"]["event"][eventIndex]
             if self.updateMode == 0:
@@ -245,10 +245,12 @@ class _eventBuildCorrelations(action._action):
     expiryTime = 86400
     oldestEvent = 86400
     correlationFields = list()
+    excludeCorrelationValues = dict()
     alwaysProcessEvents = bool()
 
     def run(self,data,persistentData,actionResult):
         correlationName = helpers.evalString(self.correlationName,{"data" : data})
+        excludeCorrelationValues = helpers.evalDict(self.excludeCorrelationValues,{"data" : data})
         expiryTime = time.time() + self.expiryTime
 
         correlatedRelationships = event._eventCorrelation().getAsClass(query={ "correlationName" : correlationName, "expiryTime" : { "$gt" : int(time.time()) } })
@@ -277,14 +279,23 @@ class _eventBuildCorrelations(action._action):
             for correlatedRelationshipItem, eventField in ((correlatedRelationshipItem, eventField) for correlatedRelationshipItem in correlatedRelationships for eventField in self.correlationFields):
                 try:
                     if type(eventItem.eventValues[eventField]) is list:
-                        matchFound = [ x for x in eventItem.eventValues[eventField] if x in correlatedRelationshipItem.correlations[eventField] ]
+                        matchFound = []
+                        if eventField in excludeCorrelationValues:
+                            matchFound = [ x for x in eventItem.eventValues[eventField] if x in correlatedRelationshipItem.correlations[eventField] and x not in excludeCorrelationValues[eventField] ]
+                        else:
+                            matchFound = [ x for x in eventItem.eventValues[eventField] if x in correlatedRelationshipItem.correlations[eventField] ]
                         if len(matchFound) > 0:
                             foundCorrelatedRelationship = correlatedRelationshipItem
                             break
                     else:
                         if eventItem.eventValues[eventField] in correlatedRelationshipItem.correlations[eventField]:
-                            foundCorrelatedRelationship = correlatedRelationshipItem
-                            break
+                            if eventField in excludeCorrelationValues:
+                                    if eventItem.eventValues[eventField] not in excludeCorrelationValues[eventField]:
+                                        foundCorrelatedRelationship = correlatedRelationshipItem
+                                        break
+                            else:
+                                foundCorrelatedRelationship = correlatedRelationshipItem
+                                break
                 except KeyError:
                     pass
             # Create new
@@ -297,16 +308,24 @@ class _eventBuildCorrelations(action._action):
                                 if eventField not in correlations:
                                     correlations[eventField] = []
                                 if eventFieldItem not in correlations[eventField]:
-                                    correlations[eventField].append(eventFieldItem)
+                                    if eventField in excludeCorrelationValues:
+                                        if eventFieldItem not in excludeCorrelationValues[eventField]:
+                                            correlations[eventField].append(eventFieldItem)
+                                    else:
+                                        correlations[eventField].append(eventFieldItem)
                         else:
                             if eventField not in correlations:
                                 correlations[eventField] = []
                             if eventItem.eventValues[eventField] not in correlations[eventField]:
-                                correlations[eventField].append(eventItem.eventValues[eventField])
+                                if eventField in excludeCorrelationValues:
+                                    if eventField not in excludeCorrelationValues[eventField]:
+                                        correlations[eventField].append(eventItem.eventValues[eventField])
+                                else:
+                                    correlations[eventField].append(eventItem.eventValues[eventField])
                     except KeyError:
                             pass
                 newEventCorrelation = event._eventCorrelation()
-                newEventCorrelation.new(self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,[helpers.classToJson(eventItem,hidden=True)],eventItem.score)
+                newEventCorrelation.new(self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,[helpers.unicodeEscapeDict(helpers.classToJson(eventItem,hidden=True))],eventItem.score)
                 correlatedRelationships.append(newEventCorrelation)
                 correlatedRelationshipsCreated.append(newEventCorrelation)
             # Merge existing
@@ -319,19 +338,29 @@ class _eventBuildCorrelations(action._action):
                                 if eventField not in foundCorrelatedRelationship.correlations:
                                     foundCorrelatedRelationship.correlations[eventField] = []
                                 if eventFieldItem not in foundCorrelatedRelationship.correlations[eventField]:
-                                    foundCorrelatedRelationship.correlations[eventField].append(eventFieldItem)
-                                    change = True
+                                    if eventField in excludeCorrelationValues:
+                                        if eventFieldItem not in excludeCorrelationValues[eventField]:
+                                            foundCorrelatedRelationship.correlations[eventField].append(eventFieldItem)
+                                            change = True
+                                    else:
+                                        foundCorrelatedRelationship.correlations[eventField].append(eventFieldItem)
+                                        change = True
                         else:
                             if eventField not in foundCorrelatedRelationship.correlations:
                                 foundCorrelatedRelationship.correlations[eventField] = []
                             if eventItem.eventValues[eventField] not in foundCorrelatedRelationship.correlations[eventField]:
-                                foundCorrelatedRelationship.correlations[eventField].append(eventItem.eventValues[eventField])
-                                change = True
+                                if eventField in excludeCorrelationValues:
+                                    if eventItem.eventValues[eventField] not in excludeCorrelationValues[eventField]:
+                                        foundCorrelatedRelationship.correlations[eventField].append(eventItem.eventValues[eventField])
+                                        change = True
+                                else:
+                                    foundCorrelatedRelationship.correlations[eventField].append(eventItem.eventValues[eventField])
+                                    change = True
                     except KeyError:
                         pass
                 if eventItem._id not in foundCorrelatedRelationship.ids:
                     foundCorrelatedRelationship.ids.append(eventItem._id)
-                    foundCorrelatedRelationship.events.append(helpers.classToJson(eventItem,hidden=True))
+                    foundCorrelatedRelationship.events.append(helpers.unicodeEscapeDict(helpers.classToJson(eventItem,hidden=True)))
                     foundCorrelatedRelationship.score += eventItem.score
                     change = True
                 if eventItem.eventType not in foundCorrelatedRelationship.types:
@@ -354,7 +383,11 @@ class _eventBuildCorrelations(action._action):
                 if correlatedRelationship != currentCorrelation:
                     for eventField in self.correlationFields:
                         try:
-                            matchFound = [ x for x in currentCorrelation.correlations[eventField] if x in correlatedRelationship.correlations[eventField] ]
+                            matchFound = []
+                            if eventField in excludeCorrelationValues:
+                                matchFound = [ x for x in currentCorrelation.correlations[eventField] if x in correlatedRelationship.correlations[eventField] and x not in excludeCorrelationValues[eventField] ]
+                            else:
+                                matchFound = [ x for x in currentCorrelation.correlations[eventField] if x in correlatedRelationship.correlations[eventField] ]
                             if len(matchFound) > 0:
                                 merged = True
                                 break
