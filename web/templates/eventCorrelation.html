@@ -196,7 +196,6 @@
         network = new vis.Network(container, data, options);
         network.on("doubleClick", function(params) {
             if ((params["nodes"].length == 1)) {
-                console.log(params["nodes"][0]);
                 openRelationshipPanel(params["nodes"][0])
             }
             return true;
