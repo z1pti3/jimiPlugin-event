@@ -18,6 +18,8 @@ class _raiseEvent(action._action):
     timeToLive = float()
     eventValues = dict()
 
+    eventTitle = str()
+
     def __init__(self):
         cache.globalCache.newCache("eventCache")
         self.bulkClass = db._bulk()
@@ -35,6 +37,7 @@ class _raiseEvent(action._action):
         self.bulkClass.bulkOperatonProcessing()
 
     def run(self,data,persistentData,actionResult):
+        eventTitle = helpers.evalString(self.eventTitle,{"data" : data})
         eventType = helpers.evalString(self.eventType,{"data" : data})
         eventSubType = helpers.evalString(self.eventSubType,{"data" : data})
         layer = self.layer
@@ -45,7 +48,7 @@ class _raiseEvent(action._action):
         uid = helpers.evalString(self.uid,{"data" : data})
         eventValues = helpers.evalDict(self.eventValues,{"data" : data})
 
-        uid = "{0}-{1}-{2}".format(eventType,eventSubType,uid)
+        uid = "{0}-{1}-{2}".format(self._id,eventType,eventSubType,uid)
 
         data["var"]["event"] = {}
 
@@ -111,7 +114,7 @@ class _raiseEvent(action._action):
                 actionResult["rc"] = 500
                 return actionResult
         
-        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score)
+        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score,data,eventTitle)
         cache.globalCache.insert("eventCache",cacheUID,eventObject,customCacheTime=timeToLive)
         try:
             persistentData["plugin"]["event"].append(eventObject)
@@ -206,6 +209,8 @@ class _eventGetCorrelations(action._action):
     includeInactive = bool()
     excludeSingleTypes = bool()
     minScore = float()
+    idsOnly = bool()
+    summaryOnly = bool()
 
     def run(self,data,persistentData,actionResult):
         correlationName = helpers.evalString(self.correlationName,{"data" : data})
@@ -215,9 +220,24 @@ class _eventGetCorrelations(action._action):
         correlatedRelationships = event._eventCorrelation().query(query={ "correlationName" : correlationName, "score" : { "$gt" : self.minScore }, "expiryTime" : { "$gt" : expiryTime } })["results"]
         if self.excludeSingleTypes:
             correlatedRelationships = [ x for x in correlatedRelationships if len(x["types"]) > 1 or len(x["subTypes"]) > 1 ]
+        if self.summaryOnly:
+            correlatedRelationships = [  { "_id" : x["_id"], "score" : x["score"], "types" : x["types"], "subTypes" : x["subTypes"], "correlations" : x["correlations"] } for x in correlatedRelationships ]
+        if self.idsOnly:
+            correlatedRelationships = [ x["_id"] for x in correlatedRelationships ]
         actionResult["result"] = True
         actionResult["rc"] = 0
         actionResult["correlations"] = correlatedRelationships
+        return actionResult
+
+class _eventGetCorrelation(action._action):
+    correlationID = str()
+
+    def run(self,data,persistentData,actionResult):
+        correlationID = helpers.evalString(self.correlationID,{"data" : data})
+        correlatedRelationship = event._eventCorrelation().query(id=correlationID)["results"][0]
+        actionResult["result"] = True
+        actionResult["rc"] = 0
+        actionResult["correlation"] = correlatedRelationship
         return actionResult
 
 class _eventBuildCorrelations(action._action):
@@ -371,7 +391,7 @@ class _eventBuildCorrelations(action._action):
                             correlatedRelationshipsDeleted.append(currentCorrelation)
                         if currentCorrelation in correlatedRelationshipsUpdated:
                             correlatedRelationshipsUpdated.remove(currentCorrelation)
-                        currentCorrelation.delete()
+                        currentCorrelation.merge(correlatedRelationship._id)
                         correlatedRelationships.remove(currentCorrelation)
                         loops += 1
                         break

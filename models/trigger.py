@@ -10,6 +10,8 @@ class _eventThreshold(trigger._trigger):
     includeInactive = bool()
     excludeSingleTypes = bool()
     minScore = float()
+    idsOnly = bool()
+    summaryOnly = bool()
 
     def __init__(self):
         pass
@@ -26,5 +28,9 @@ class _eventThreshold(trigger._trigger):
         events = event._eventCorrelation().query(query={ "correlationName" : correlationName, "score" : { "$gt" : self.minScore }, "expiryTime" : { "$gt" : expiryTime } })["results"]
         if self.excludeSingleTypes:
             events = [ x for x in events if len(x["types"]) > 1 or len(x["subTypes"]) > 1 ]
-        self.result["events"] =events
+        if self.summaryOnly:
+            events = [  { "_id" : x["_id"], "score" : x["score"], "types" : x["types"], "subTypes" : x["subTypes"], "correlations" : x["correlations"] } for x in events ]
+        if self.idsOnly:
+            events = [ x["_id"] for x in events ]
+        self.result["events"] = events
         

@@ -27,7 +27,13 @@ def eventCorrelationPage(eventCorrelationID):
 
 @pluginPages.route("/event/eventCorrelation/<eventCorrelationID>/get/")
 def getEventCorrelation(eventCorrelationID):
-    eventCorrelation = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,id=eventCorrelationID)[0]
+    while True:
+        eventCorrelation = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,id=eventCorrelationID)[0]
+        if eventCorrelation.mergedID != "":
+            eventCorrelationID = eventCorrelation.mergedID
+        else:
+            break
+    
     nodes = {}
     edges = []
     timeMap = []
@@ -35,7 +41,13 @@ def getEventCorrelation(eventCorrelationID):
         if sourceEvent["eventRaiseTime"] not in timeMap:
             timeMap.append(sourceEvent["eventRaiseTime"])
         if sourceEvent["uid"] not in nodes:
-            nodes[sourceEvent["uid"]] = { "_id" : sourceEvent["_id"], "eventTime" : sourceEvent["eventRaiseTime"], "eventValues" : [] }
+            try:
+                label = sourceEvent["eventTitle"]
+                if label == "":
+                    label = sourceEvent["uid"]
+            except KeyError:
+                label = sourceEvent["uid"]
+            nodes[sourceEvent["uid"]] = { "_id" : sourceEvent["_id"], "label" : label, "eventTime" : sourceEvent["eventRaiseTime"], "eventValues" : [] }
             for field, fieldValue in sourceEvent["eventValues"].items():
                 nodes[sourceEvent["uid"]]["eventValues"].append([field,fieldValue])
         else:
@@ -76,7 +88,7 @@ def getEventCorrelation(eventCorrelationID):
     timeMap.sort()
     for key, item in nodes.items():
         item["x"] = timeMap.index(item["eventTime"])*500
-        item["y"] = round(random.random()*50*len(nodes))
+        item["y"] = round(random.random()*250*len(nodes))
 
     return { "nodes" : nodes, "edges" : edges }, 200
 

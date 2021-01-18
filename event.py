@@ -1,7 +1,7 @@
 from core import plugin, model
 
 class _event(plugin._plugin):
-    version = 0.6
+    version = 0.7
 
     def install(self):
         # Register models
@@ -13,6 +13,7 @@ class _event(plugin._plugin):
         model.registerModel("eventGetCorrelations","_eventGetCorrelations","_action","plugins.event.models.action")
         model.registerModel("eventBuildCorrelations","_eventBuildCorrelations","_action","plugins.event.models.action")
         model.registerModel("eventCorrelation","_eventCorrelation","_document","plugins.event.models.event",True)
+        model.registerModel("eventGetCorrelation","_eventGetCorrelation","_action","plugins.event.models.action")
         return True
 
     def uninstall(self):
@@ -25,6 +26,7 @@ class _event(plugin._plugin):
         model.deregisterModel("eventGetCorrelations","_eventGetCorrelations","_action","plugins.event.models.action")
         model.deregisterModel("eventBuildCorrelations","_eventBuildCorrelations","_action","plugins.event.models.action")
         model.deregisterModel("event","_eventCorrelation","_document","plugins.event.models.event")
+        model.deregisterModel("eventGetCorrelation","_eventGetCorrelation","_action","plugins.event.models.action")
         return True
 
     def upgrade(self,LatestPluginVersion):
@@ -38,3 +40,5 @@ class _event(plugin._plugin):
             model.registerModel("eventCorrelation","_eventCorrelation","_document","plugins.event.models.event",True)
             model.registerModel("eventGetCorrelations","_eventGetCorrelations","_action","plugins.event.models.action")
             model.registerModel("eventBuildCorrelations","_eventBuildCorrelations","_action","plugins.event.models.action")
+        if self.version < 0.7:
+            model.registerModel("eventGetCorrelation","_eventGetCorrelation","_action","plugins.event.models.action")

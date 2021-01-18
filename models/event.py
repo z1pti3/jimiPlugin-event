@@ -12,6 +12,7 @@ class _eventCorrelation(db._document):
     score = float()
     correlationLastUpdate = int()
     expiryTime = int()
+    mergedID = str()
 
     _dbCollection = db.db["eventCorrelation"]
 
@@ -28,12 +29,25 @@ class _eventCorrelation(db._document):
         self.correlationLastUpdate = int(time.time())
         return super(_eventCorrelation, self).new()
 
+    def merge(self,mergedID):
+        self.mergedID = mergedID
+        self.correlationName = mergedID
+        self.expiryTime = 0
+        self.ids = []
+        self.types = []
+        self.subTypes = []
+        self.correlations = []
+        self.events = []
+        self.score = 0
+        self.correlationLastUpdate = 0
+        self.update(["mergedID","correlationName","expiryTime","ids","types","subTypes","correlations","events","score","correlationLastUpdate"])
+
+
 class _event(db._document):
     conductID = str()
     flowID = str()
 
     eventRaiseTime = float()
-
     eventType = str()
     eventSubType = str()
     expiryTime = int()
@@ -45,10 +59,12 @@ class _event(db._document):
     benign = float()
     score = float()
     uid = str()
+    data = dict()
+    eventTitle = str()
 
     _dbCollection = db.db["event"]
 
-    def bulkNew(self,bulkClass,acl,conductID,flowID,eventType,eventSubType,expiryTime,eventValues,uid,accuracy,impact,layer,benign,score):
+    def bulkNew(self,bulkClass,acl,conductID,flowID,eventType,eventSubType,expiryTime,eventValues,uid,accuracy,impact,layer,benign,score,data,eventTitle):
         self.acl = acl
         self.conductID = conductID
         self.flowID = flowID
@@ -63,6 +79,8 @@ class _event(db._document):
         self.layer = layer
         self.benign = benign
         self.score = score
+        self.data = data
+        self.eventTitle = eventTitle
 
         self.eventRaiseTime = int(time.time())
 

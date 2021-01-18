@@ -103,7 +103,7 @@
             for (d in loadData["nodes"]) {
                 if (!mapping.hasOwnProperty(d)) {
                     id = nodes.length;
-                    nodes.push({ id: id, uid: loadData["nodes"][d]["_id"], title: JSON.stringify(loadData["nodes"][d]["eventValues"]), label: d, value: 1, x: loadData["nodes"][d]["x"], y: loadData["nodes"][d]["y"] });
+                    nodes.push({ id: id, uid: loadData["nodes"][d]["_id"], title: JSON.stringify(loadData["nodes"][d]["eventValues"]), label: loadData["nodes"][d]["label"], value: 1, x: loadData["nodes"][d]["x"], y: loadData["nodes"][d]["y"] });
                     mapping[d] = { id :  id };
                 }
             }
