@@ -30,13 +30,25 @@
 <script>
     $( document ).ready(function() {
         $.ajax({url:"get/", type:"GET", success: function ( result ) {
-                network(result,"map")
+                buildNetwork(result,"map")
             }
         });
     })
 </script>
 
 <script>
+    var nodes = [];
+    var edges = [];
+    var network = null;
+
+    $(document).keyup(function( event ) {
+        if (event.keyCode == 46 && document.activeElement.type != "text" && document.activeElement.type != "checkbox" && document.activeElement.type != "textarea") {
+            selectedNodes = network.getSelectedNodes()
+            if (selectedNodes.length == 1) {
+                nodes.remove({ id: selectedNodes[0] });
+            }
+        }
+    });
 
     var panelRelationshipHTML = `
     <div class="propertiesPanel theme-panelContainer">
@@ -90,99 +102,96 @@
         }
     }
 
-    function network(loadData,HTMLElementID) {
-            var network = null;
-            var mapping = {};
-            var dataMapping = {}
-            var nodes = [];
-            var edges = [];
-            var edgeMapping = {};
-            var finalNodes = []
-            var y = Math.floor(Math.random() * 1000);
+    function buildNetwork(loadData,HTMLElementID) {
+        nodes = new vis.DataSet([]);
+	    edges = new vis.DataSet([]);
+        var mapping = {};
+        var edgeMapping = {};
+        var y = Math.floor(Math.random() * 1000);
 
-            for (d in loadData["nodes"]) {
-                if (!mapping.hasOwnProperty(d)) {
-                    id = nodes.length;
-                    nodes.push({ id: id, uid: loadData["nodes"][d]["_id"], title: JSON.stringify(loadData["nodes"][d]["eventValues"]), label: loadData["nodes"][d]["label"], value: 1, x: loadData["nodes"][d]["x"], y: loadData["nodes"][d]["y"] });
-                    mapping[d] = { id :  id };
+        for (d in loadData["nodes"]) {
+            if (!mapping.hasOwnProperty(d)) {
+                id = nodes.length;
+                nodes.add({ id: id, uid: loadData["nodes"][d]["_id"], title: JSON.stringify(loadData["nodes"][d]["eventValues"]), label: loadData["nodes"][d]["label"], value: 1, x: loadData["nodes"][d]["x"], y: loadData["nodes"][d]["y"] });
+                mapping[d] = { id :  id };
+            }
+        }
+
+
+        for (d in loadData["edges"]) {
+            a = mapping[loadData["edges"][d]["source"]]
+            b = mapping[loadData["edges"][d]["target"]]
+
+            if (a["id"] != b["id"]) {
+                var key = loadData["edges"][d]["source"]+"->"+loadData["edges"][d]["target"];
+                var key2 = loadData["edges"][d]["target"]+"->"+loadData["edges"][d]["source"];
+                if (!edgeMapping.hasOwnProperty(key) && !edgeMapping.hasOwnProperty(key2)) {
+                    edgeMapping[key] = 1;
+                    edgeMapping[key2] = 1;
+                    edges.add({ 
+                        from: a["id"], 
+                        to: b["id"],
+                        id: key,
+                        title: JSON.stringify(loadData["edges"][d]["matches"])
+                    });
                 }
             }
-
-
-            for (d in loadData["edges"]) {
-                a = mapping[loadData["edges"][d]["source"]]
-                b = mapping[loadData["edges"][d]["target"]]
-
-                if (a["id"] != b["id"]) {
-                    var key = loadData["edges"][d]["source"]+"->"+loadData["edges"][d]["target"];
-                    var key2 = loadData["edges"][d]["target"]+"->"+loadData["edges"][d]["source"];
-                    if (!edgeMapping.hasOwnProperty(key) && !edgeMapping.hasOwnProperty(key2)) {
-                        edgeMapping[key] = 1;
-                        edgeMapping[key2] = 1;
-                        edges.push({ 
-                            from: a["id"], 
-                            to: b["id"],
-                            id: key,
-                            title: JSON.stringify(loadData["edges"][d]["matches"])
-                        });
+        }
+        
+        var container = document.getElementById(HTMLElementID);
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+        var options = {
+            physics: {
+                enabled: false
+            },
+            nodes: {
+                shape: "dot",
+                scaling: {
+                    min: 25,
+                    max: 25,
+                },
+                color: {
+                    background: "#4090c9",
+                    highlight: {
+                        background: "#000",
+                        border: "#FFF"
+                    },
+                    hover: {
+                        background: "#000",
+                        border: "#FFF"
+                    }
+                },
+                shadow:{
+                    enabled: true,
+                    color: 'rgba(0,0,0,0.5)',
+                    size:10,
+                    x:5,
+                    y:5
+                },
+                font: {
+                    size: 30,
+                    face: "Tahoma",
+                    color: "#bfbfbf"
+                }
+            },
+            edges: {
+                width: 3,
+                color: {
+                    color: "#4090c9",
+                    highlight: "#FFF",
+                },
+                smooth: {
+                    type: "continuous",
+                },
+                arrows: {
+                    to: {
+                        enabled: true
                     }
                 }
             }
-            
-            var container = document.getElementById(HTMLElementID);
-            var data = {
-                nodes: nodes,
-                edges: edges
-            };
-            var options = {
-                physics: {
-                    enabled: false
-                },
-                nodes: {
-                    shape: "dot",
-                    scaling: {
-                        min: 25,
-                        max: 25,
-                    },
-                    color: {
-                        background: "#4090c9",
-                        highlight: {
-                            background: "#000",
-                            border: "#FFF"
-                        },
-                        hover: {
-                            background: "#000",
-                            border: "#FFF"
-                        }
-                    },
-                    shadow:{
-                        enabled: true,
-                        color: 'rgba(0,0,0,0.5)',
-                        size:10,
-                        x:5,
-                        y:5
-                    },
-                    font: {
-                        size: 30,
-                        face: "Tahoma",
-                        color: "#bfbfbf"
-                    }
-                },
-                edges: {
-                    width: 3,
-                    color: {
-                        color: "#4090c9",
-                        highlight: "#FFF",
-                    },
-                    smooth: {
-                        type: "continuous",
-                    },
-                    arrows: {
-                        to: {
-                            enabled: true
-                        }
-                    }
-                }
         };
         network = new vis.Network(container, data, options);
         network.on("doubleClick", function(params) {
