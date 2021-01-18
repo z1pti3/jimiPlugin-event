@@ -111,8 +111,8 @@
 
         for (d in loadData["nodes"]) {
             if (!mapping.hasOwnProperty(d)) {
-                id = nodes.length;
-                nodes.add({ id: id, uid: loadData["nodes"][d]["_id"], title: JSON.stringify(loadData["nodes"][d]["eventValues"]), label: loadData["nodes"][d]["label"], value: 1, x: loadData["nodes"][d]["x"], y: loadData["nodes"][d]["y"] });
+                id = loadData["nodes"][d]["_id"];
+                nodes.add({ id: id, title: JSON.stringify(loadData["nodes"][d]["eventValues"]), label: loadData["nodes"][d]["label"], value: 1, x: loadData["nodes"][d]["x"], y: loadData["nodes"][d]["y"] });
                 mapping[d] = { id :  id };
             }
         }
@@ -196,7 +196,8 @@
         network = new vis.Network(container, data, options);
         network.on("doubleClick", function(params) {
             if ((params["nodes"].length == 1)) {
-                openRelationshipPanel(nodes[params["nodes"][0]]["uid"])
+                console.log(params["nodes"][0]);
+                openRelationshipPanel(params["nodes"][0])
             }
             return true;
         });
