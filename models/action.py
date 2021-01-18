@@ -46,7 +46,7 @@ class _raiseEvent(action._action):
         benign = self.benign
         timeToLive = self.timeToLive
         uid = helpers.evalString(self.uid,{"data" : data})
-        eventValues = helpers.unicodeEscapeDict(helpers.evalDict(self.eventValues,{"data" : data}))
+        eventValues = helpers.evalDict(self.eventValues,{"data" : data})
 
         uid = "{0}-{1}-{2}".format(self._id,eventType,eventSubType,uid)
 
@@ -114,7 +114,7 @@ class _raiseEvent(action._action):
                 actionResult["rc"] = 500
                 return actionResult
         
-        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score,helpers.unicodeEscapeDict(data),eventTitle)
+        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score,data,eventTitle)
         cache.globalCache.insert("eventCache",cacheUID,eventObject,customCacheTime=timeToLive)
         try:
             persistentData["plugin"]["event"].append(eventObject)
@@ -187,7 +187,7 @@ class _eventUpdate(action._action):
 
     def run(self,data,persistentData,actionResult):
         eventIndex = helpers.evalString(self.eventIndex,{"data" : data})
-        eventValues = helpers.unicodeEscapeDict(helpers.evalDict(self.eventValues,{"data" : data}))
+        eventValues = helpers.evalDict(self.eventValues,{"data" : data})
         try:
             currentEvent = persistentData["plugin"]["event"][eventIndex]
             if self.updateMode == 0:
@@ -325,7 +325,7 @@ class _eventBuildCorrelations(action._action):
                     except KeyError:
                             pass
                 newEventCorrelation = event._eventCorrelation()
-                newEventCorrelation.new(self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,[helpers.unicodeEscapeDict(helpers.classToJson(eventItem,hidden=True))],eventItem.score)
+                newEventCorrelation.new(self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,[helpers.classToJson(eventItem,hidden=True)],eventItem.score)
                 correlatedRelationships.append(newEventCorrelation)
                 correlatedRelationshipsCreated.append(newEventCorrelation)
             # Merge existing
@@ -360,7 +360,7 @@ class _eventBuildCorrelations(action._action):
                         pass
                 if eventItem._id not in foundCorrelatedRelationship.ids:
                     foundCorrelatedRelationship.ids.append(eventItem._id)
-                    foundCorrelatedRelationship.events.append(helpers.unicodeEscapeDict(helpers.classToJson(eventItem,hidden=True)))
+                    foundCorrelatedRelationship.events.append(helpers.classToJson(eventItem,hidden=True))
                     foundCorrelatedRelationship.score += eventItem.score
                     change = True
                 if eventItem.eventType not in foundCorrelatedRelationship.types:
