@@ -87,8 +87,8 @@ def getEventCorrelation(eventCorrelationID):
 
     timeMap.sort()
     for key, item in nodes.items():
-        item["x"] = timeMap.index(item["eventTime"])*500
-        item["y"] = round(random.random()*250*len(nodes))
+        item["x"] = timeMap.index(item["eventTime"])*200
+        item["y"] = round(random.random()*100)
 
     return { "nodes" : nodes, "edges" : edges }, 200
 
