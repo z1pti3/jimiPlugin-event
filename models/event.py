@@ -4,7 +4,6 @@ from core import db, helpers, logging, audit
 
 class _eventCorrelation(db._document):
     correlationName = str()
-    events = list()
     ids = list()
     types = list()
     subTypes = list()
@@ -16,7 +15,7 @@ class _eventCorrelation(db._document):
 
     _dbCollection = db.db["eventCorrelation"]
 
-    def new(self,acl,correlationName,expiryTime,ids,types,subTypes,correlations,events,score):
+    def new(self,acl,correlationName,expiryTime,ids,types,subTypes,correlations,score):
         self.acl = acl
         self.correlationName = correlationName
         self.expiryTime = int(time.time()) + expiryTime
@@ -24,10 +23,21 @@ class _eventCorrelation(db._document):
         self.types = types
         self.subTypes = subTypes
         self.correlations = correlations
-        self.events = events
         self.score = score
         self.correlationLastUpdate = int(time.time())
         return super(_eventCorrelation, self).new()
+
+    def bulkNew(self,bulkClass,acl,correlationName,expiryTime,ids,types,subTypes,correlations,score):
+        self.acl = acl
+        self.correlationName = correlationName
+        self.expiryTime = int(time.time()) + expiryTime
+        self.ids = ids
+        self.types = types
+        self.subTypes = subTypes
+        self.correlations = correlations
+        self.score = score
+        self.correlationLastUpdate = int(time.time())
+        return super(_eventCorrelation, self).bulkNew(bulkClass)
 
     def merge(self,mergedID):
         self.mergedID = mergedID
@@ -37,10 +47,21 @@ class _eventCorrelation(db._document):
         self.types = []
         self.subTypes = []
         self.correlations = []
-        self.events = []
         self.score = 0
         self.correlationLastUpdate = 0
-        self.update(["mergedID","correlationName","expiryTime","ids","types","subTypes","correlations","events","score","correlationLastUpdate"])
+        self.update(["mergedID","correlationName","expiryTime","ids","types","subTypes","correlations","score","correlationLastUpdate"])
+
+    def bulkMerge(self,mergedID,bulkClass):
+        self.mergedID = mergedID
+        self.correlationName = mergedID
+        self.expiryTime = 0
+        self.ids = []
+        self.types = []
+        self.subTypes = []
+        self.correlations = []
+        self.score = 0
+        self.correlationLastUpdate = 0
+        self.bulkUpdate(["mergedID","correlationName","expiryTime","ids","types","subTypes","correlations","score","correlationLastUpdate"],bulkClass)    
 
 
 class _event(db._document):
