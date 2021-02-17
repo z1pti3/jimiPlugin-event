@@ -34,61 +34,42 @@ def getEventCorrelation(eventCorrelationID):
         else:
             break
     
-    nodes = {}
-    edges = []
-    timeMap = []
-    for sourceEvent in eventCorrelation.events:
-        if sourceEvent["eventRaiseTime"] not in timeMap:
-            timeMap.append(sourceEvent["eventRaiseTime"])
-        if sourceEvent["uid"] not in nodes:
-            try:
-                label = sourceEvent["eventTitle"]
-                if label == "":
-                    label = sourceEvent["uid"]
-            except KeyError:
+    nodesDict = {}
+    edgesDict = {}
+    for sourceEvent in eventCorrelation.events[0:100]:
+        try:
+            label = sourceEvent["eventTitle"]
+            if label == "":
                 label = sourceEvent["uid"]
-            nodes[sourceEvent["uid"]] = { "_id" : sourceEvent["_id"], "label" : label, "eventTime" : sourceEvent["eventRaiseTime"], "eventValues" : [] }
-            for field, fieldValue in sourceEvent["eventValues"].items():
-                nodes[sourceEvent["uid"]]["eventValues"].append([field,fieldValue])
+        except KeyError:
+            label = sourceEvent["uid"]
+        if label not in nodesDict:
+            nodesDict[label] = { "id" : sourceEvent["uid"], "label" : label, "value" : 1 }
         else:
-            if sourceEvent["eventRaiseTime"] < nodes[sourceEvent["uid"]]["eventTime"]:
-                nodes[sourceEvent["uid"]]["eventTime"] = sourceEvent["eventRaiseTime"]
-                nodes[sourceEvent["uid"]]["_id"] = sourceEvent["_id"]
-                for field, fieldValue in sourceEvent["eventValues"].items():
-                    if [field,fieldValue] not in nodes[sourceEvent["uid"]]["eventValues"]:
-                        nodes[sourceEvent["uid"]]["eventValues"].append([field,fieldValue])
+            nodesDict[label]["value"] += 1
 
-    for sourceEvent, targetEvent in ((sourceEvent, targetEvent) for sourceEvent in eventCorrelation.events for targetEvent in eventCorrelation.events):
-        if sourceEvent["uid"] != targetEvent["uid"]:
-            temp = { "source" : sourceEvent["uid"], "target" : targetEvent["uid"], "matches" : [ ] }
-            for field, fieldValue in sourceEvent["eventValues"].items():
-                if type(fieldValue) is list:
-                    for fieldValueItems in fieldValue:
-                        try:
-                            if type(targetEvent["eventValues"][field]) is list:
-                                if fieldValueItems in targetEvent["eventValues"][field]:
-                                    temp["matches"].append([field,fieldValueItems])
-                            else:
-                                if fieldValueItems == targetEvent["eventValues"][field]:
-                                    temp["matches"].append([field,fieldValueItems])
-                        except KeyError:
-                            pass
-                try:
-                    if type(targetEvent["eventValues"][field]) is list:
-                        if fieldValue in targetEvent["eventValues"][field]:
-                            temp["matches"].append([field,fieldValue])
+        nodeUID = nodesDict[label]["id"]
+        for field, fieldValue in sourceEvent["eventValues"].items():
+            if type(fieldValue) is list:
+                for fieldValueItem in fieldValue:
+                    uid = "{0}={1}".format(field,fieldValueItem)
+                    if uid not in nodesDict:
+                        nodesDict[uid] = { "id" : uid, "label" : uid, "value" : 1 }
                     else:
-                        if fieldValue == targetEvent["eventValues"][field]:
-                            temp["matches"].append([field,fieldValue])
-                except KeyError:
-                    pass
-            if len(temp["matches"]) > 0:
-                edges.append(temp)
-
-    timeMap.sort()
-    for key, item in nodes.items():
-        item["x"] = timeMap.index(item["eventTime"])*200
-        item["y"] = round(random.random()*100)
+                        nodesDict[uid]["value"] += 1
+                    key = "{0}-{1}".format(nodeUID,uid)
+                    edgesDict[key] = { "id" : key, "from" : nodeUID, "to" : uid }
+            else:
+                uid = "{0}={1}".format(field,fieldValue)
+                if uid not in nodesDict:
+                    nodesDict[uid] = { "id" : uid, "label" : uid, "value" : 1 }
+                else:
+                    nodesDict[uid]["value"] += 1
+                key = "{0}-{1}".format(nodeUID,uid)
+                edgesDict[key] = { "id" : key, "from" : nodeUID, "to" : uid }
+                
+    nodes = [ x for x in nodesDict.values() ]
+    edges = [ x for x in edgesDict.values() ]
 
     return { "nodes" : nodes, "edges" : edges }, 200
 

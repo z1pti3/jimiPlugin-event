@@ -103,40 +103,8 @@
     }
 
     function buildNetwork(loadData,HTMLElementID) {
-        nodes = new vis.DataSet([]);
-	    edges = new vis.DataSet([]);
-        var mapping = {};
-        var edgeMapping = {};
-        var y = Math.floor(Math.random() * 1000);
-
-        for (d in loadData["nodes"]) {
-            if (!mapping.hasOwnProperty(d)) {
-                id = loadData["nodes"][d]["_id"];
-                nodes.add({ id: id, title: JSON.stringify(loadData["nodes"][d]["eventValues"]), label: loadData["nodes"][d]["label"], value: 1, x: loadData["nodes"][d]["x"], y: loadData["nodes"][d]["y"] });
-                mapping[d] = { id :  id };
-            }
-        }
-
-
-        for (d in loadData["edges"]) {
-            a = mapping[loadData["edges"][d]["source"]]
-            b = mapping[loadData["edges"][d]["target"]]
-
-            if (a["id"] != b["id"]) {
-                var key = loadData["edges"][d]["source"]+"->"+loadData["edges"][d]["target"];
-                var key2 = loadData["edges"][d]["target"]+"->"+loadData["edges"][d]["source"];
-                if (!edgeMapping.hasOwnProperty(key) && !edgeMapping.hasOwnProperty(key2)) {
-                    edgeMapping[key] = 1;
-                    edgeMapping[key2] = 1;
-                    edges.add({ 
-                        from: a["id"], 
-                        to: b["id"],
-                        id: key,
-                        title: JSON.stringify(loadData["edges"][d]["matches"])
-                    });
-                }
-            }
-        }
+        nodes = new vis.DataSet(loadData["nodes"]);
+	    edges = new vis.DataSet(loadData["edges"]);
         
         var container = document.getElementById(HTMLElementID);
         var data = {
@@ -145,46 +113,32 @@
         };
         var options = {
             interaction: {
-                hover: true,
-                hoverConnectedEdges: true
+                tooltipDelay: 200,
+                hideEdgesOnDrag: true,
+                hideEdgesOnZoom: true,
+            },
+            layout: {
+                improvedLayout: false
             },
             physics: {
                 enabled: false,
                 timestep: 1,
-                solver: "hierarchicalRepulsion",
-                hierarchicalRepulsion: {
-                    nodeDistance: 250,
-                    avoidOverlap: 1
-                },
-                stabilization: {
-                    iterations: 5000
+                solver: "repulsion",
+                repulsion: {
+                    nodeDistance: 300
                 }
             },
             nodes: {
                 shape: "dot",
-                fixed: {
-                    x: true
-                },
                 color: {
                     background: "#4090c9",
                     highlight: {
                         background: "#000",
                         border: "#FFF"
-                    },
-                    hover: {
-                        background: "#000",
-                        border: "#FFF"
                     }
                 },
-                shadow:{
-                    enabled: true,
-                    color: 'rgba(0,0,0,0.5)',
-                    size:10,
-                    x:5,
-                    y:5
-                },
                 font: {
-                    size: 18,
+                    size: 10,
                     face: "Tahoma",
                     color: "#bfbfbf"
                 }
@@ -193,17 +147,11 @@
                 width: 1,
                 selectionWidth: 1,
                 color: {
-                    color: "#ffffff0b", 
+                    color: "#ffffff2f", 
                     highlight: "#FFF",
-                    hover: "#FFF",
                 },
                 smooth: {
                     type: "continuous",
-                },
-                arrows: {
-                    to: {
-                        enabled: true
-                    }
                 }
             }
         };
