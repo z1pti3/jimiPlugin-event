@@ -73,8 +73,8 @@ class _raiseEvent(action._action):
             score = 0
         data["var"]["event"]["score"] = score
 
-        cacheUID = "{0}-{1}-{2}".format(data["conductID"],data["flowID"],uid)
-        foundEvent = cache.globalCache.get("eventCache",cacheUID,getEvent,data["conductID"],data["flowID"],uid,eventType,eventSubType,extendCacheTime=True,customCacheTime=timeToLive,nullUpdate=True)
+        cacheUID = "{0}-{1}-{2}".format(data["conductID"],data["flow_id"],uid)
+        foundEvent = cache.globalCache.get("eventCache",cacheUID,getEvent,data["conductID"],data["flow_id"],uid,eventType,eventSubType,extendCacheTime=True,customCacheTime=timeToLive,nullUpdate=True)
         if foundEvent != None:
             try:
                 persistentData["plugin"]["event"].append(foundEvent)
@@ -116,7 +116,7 @@ class _raiseEvent(action._action):
                 actionResult["rc"] = 500
                 return actionResult
         
-        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flowID"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score,data,eventTitle)
+        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flow_id"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score,data,eventTitle)
         cache.globalCache.insert("eventCache",cacheUID,eventObject,customCacheTime=timeToLive)
         try:
             persistentData["plugin"]["event"].append(eventObject)
@@ -307,7 +307,7 @@ class _eventBuildCorrelations(action._action):
             # Create new
             if foundCorrelatedRelationship == None:
                 newEventCorrelation = event._eventCorrelation()
-                newEventCorrelation.bulkNew(self.bulkClass, self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,eventItem.score)
+                newEventCorrelation.bulkNew(self.bulkClass, self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,eventItem.score,[jimi.helpers.classToJson(eventItem,hidden=True)])
                 correlatedRelationshipsCreated.append(newEventCorrelation)
                 correlatedRelationships.append(newEventCorrelation)
                 for eventField in eventItem.eventValues:
@@ -330,6 +330,7 @@ class _eventBuildCorrelations(action._action):
                 if eventItem._id not in foundCorrelatedRelationship.ids:
                     foundCorrelatedRelationship.ids.append(eventItem._id)
                     foundCorrelatedRelationship.score += eventItem.score
+                    foundCorrelatedRelationship.events.append(jimi.helpers.classToJson(eventItem,hidden=True))
                 if eventItem.eventType not in foundCorrelatedRelationship.types:
                     foundCorrelatedRelationship.types.append(eventItem.eventType)
                 if eventItem.eventSubType not in foundCorrelatedRelationship.subTypes:
@@ -361,6 +362,10 @@ class _eventBuildCorrelations(action._action):
                                 for value in getattr(correlatedRelationship,mergeKey):
                                     if value not in getattr(currentCorrelation,mergeKey):
                                         getattr(currentCorrelation,mergeKey).append(value)
+                                if mergeKey == "ids":
+                                    for eventItem in correlatedRelationship.events:
+                                        if eventItem not in currentCorrelation.events:
+                                            currentCorrelation.events.append(eventItem)
                             currentCorrelation.score += correlatedRelationship.score
                             currentCorrelation.correlationLastUpdate = int(time.time())
                             currentCorrelation.expiryTime = expiryTime
@@ -388,7 +393,7 @@ class _eventBuildCorrelations(action._action):
         deleted = [ helpers.classToJson(x,hidden=True) for x in correlatedRelationshipsDeleted ]
 
         for correlatedRelationshipUpdated in correlatedRelationshipsUpdated:
-            correlatedRelationshipUpdated.bulkUpdate(["expiryTime","ids","types","subTypes","correlations","score"],self.bulkClass)
+            correlatedRelationshipUpdated.bulkUpdate(["expiryTime","ids","types","subTypes","correlations","score","events"],self.bulkClass)
             updated.append(helpers.classToJson(correlatedRelationshipUpdated,hidden=True))
         delList = []
         for correlatedRelationshipDeleted in correlatedRelationshipsDeleted:
