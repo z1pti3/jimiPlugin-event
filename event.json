@@ -1,0 +1,581 @@
+{
+    "name" : "event",
+    "author" : "z1p",
+    "version" : 1.0,
+    "categories" : ["siem"],
+    "description" : "Event gives jimi SIEM capability with event generation and correlation triggers and actions. Event uses a custom SIEM scoring system 'score = (( accuracy * ( impact * layer ) / benign )' enable simple adoption of Mitre Att&ck framework and custom events alike. Using Event's correlation engine makes it possible to draw links between different events and take action when thresholds are exceeded.",
+    "icon" : null,
+    "requirements" : {
+        "jimi_min_version" : null,
+        "jimi_max_version" : null,
+        "plugins" : []
+    },
+    "collections" : {
+        "event" : {
+            "display_name" : "event",
+            "className" : "_event",
+            "class_location" : "models.event",
+            "description" : "Collection holding events.",
+            "fields" : [
+                { "schema_item" : "conductID", "schema_value" : "conductID", "type" : "input", "label" : "conductID", "description" : "Conduct that raised the event." },
+                { "schema_item" : "flowID", "schema_value" : "flowID", "type" : "input", "label" : "flowID", "description" : "Flow object that raised the event." },
+                { "schema_item" : "eventRaiseTime", "schema_value" : "eventRaiseTime", "type" : "input", "label" : "eventRaiseTime", "description" : "Epoch time when an event was raised." },
+                { "schema_item" : "eventType", "schema_value" : "eventType", "type" : "input", "label" : "eventType", "description" : "Type of event." },
+                { "schema_item" : "eventSubType", "schema_value" : "eventSubType", "type" : "input", "label" : "eventSubType", "description" : "Sub-type of event." },
+                { "schema_item" : "expiryTime", "schema_value" : "expiryTime", "type" : "input", "label" : "expiryTime", "description" : "Epoch time when the event will be considered expired." },
+                { "schema_item" : "eventValues", "schema_value" : "eventValues", "type" : "json-input", "label" : "eventValues", "description" : "Values stored this this event." },
+                { "schema_item" : "eventFields", "schema_value" : "eventFields", "type" : "json-input", "label" : "eventFields", "description" : "List of fields found within eventValues." },
+                { "schema_item" : "accuracy", "schema_value" : "accuracy", "type" : "input", "label" : "accuracy", "description" : "Event accuracy value." },
+                { "schema_item" : "impact", "schema_value" : "impact", "type" : "input", "label" : "impact", "description" : "Event impact value." },
+                { "schema_item" : "layer", "schema_value" : "layer", "type" : "input", "label" : "layer", "description" : "Event layer value." },
+                { "schema_item" : "benign", "schema_value" : "benign", "type" : "input", "label" : "benign", "description" : "Event benign value." },
+                { "schema_item" : "score", "schema_value" : "score", "type" : "input", "label" : "score", "description" : "Event score value." },
+                { "schema_item" : "uid", "schema_value" : "uid", "type" : "input", "label" : "uid", "description" : "Event uid value." },
+                { "schema_item" : "data", "schema_value" : "data", "type" : "json-input", "label" : "data", "description" : "The data value at the time the event was raised." },
+                { "schema_item" : "eventTitle", "schema_value" : "eventTitle", "type" : "input", "label" : "eventTitle", "description" : "Event title." }
+            ],
+            "data_out" : {
+
+            }
+        },
+        "eventCorrelation" : {
+            "display_name" : "eventCorrelation",
+            "className" : "_eventCorrelation",
+            "class_location" : "models.event",
+            "description" : "Collection holding correlated events.",
+            "fields" : [
+                { "schema_item" : "correlationName", "schema_value" : "correlationName", "type" : "input", "label" : "correlationName", "description" : "Name of this given correlation type i.e SIEM. This value is useful when the system is shared or you want to split up the events correlated into different areas which do not conflict with each other." },
+                { "schema_item" : "events", "schema_value" : "events", "type" : "json-input", "label" : "events", "description" : "All of the correlated events within this correlation." },
+                { "schema_item" : "ids", "schema_value" : "ids", "type" : "json-input", "label" : "ids", "description" : "All of the correlated event IDs within this correlation." },
+                { "schema_item" : "types", "schema_value" : "types", "type" : "json-input", "label" : "types", "description" : "All of the correlated event types within this correlation." },
+                { "schema_item" : "subTypes", "schema_value" : "subTypes", "type" : "json-input", "label" : "subTypes", "description" : "All of the correlated event sub-types within this correlation." },
+                { "schema_item" : "correlations", "schema_value" : "correlations", "type" : "json-input", "label" : "correlations", "description" : "Matched correlations and relationships." },
+                { "schema_item" : "score", "schema_value" : "score", "type" : "input", "label" : "score", "description" : "The current overall score of the correlation." },
+                { "schema_item" : "correlationLastUpdate", "schema_value" : "correlationLastUpdate", "type" : "input", "label" : "correlationLastUpdate", "description" : "Last time the correlation was updated in epoch value." },
+                { "schema_item" : "expiryTime", "schema_value" : "expiryTime", "type" : "input", "label" : "expiryTime", "description" : "Epoch expiry time for this correlation." },
+                { "schema_item" : "mergedID", "schema_value" : "mergedID", "type" : "input", "label" : "mergedID", "description" : "ID of the correlation that this original correlation has merged into." }
+            ],
+            "data_out" : {
+
+            }
+        }
+    },
+    "triggers" : {
+        "eventThreshold" : {
+            "display_name" : "eventThreshold",
+            "className" : "_eventThreshold",
+            "class_location" : "models.trigger",
+            "description" : "Trigger that returns matching correlations based on the defined fields.",
+            "fields" : [
+                { "schema_item" : "correlationName", "schema_value" : "correlationName", "type" : "input", "label" : "correlationName", "description" : "Name of the correlation group to search through.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "minScore", "schema_value" : "minScore", "type" : "input", "label" : "minScore", "description" : "Only correlation overall scores higher than this value are returned.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "includeInactive", "schema_value" : "includeInactive", "type" : "checkbox", "label" : "includeInactive", "description" : "When True all correlations are returned even if they are now expired, otherwise only active are returned.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "excludeSingleTypes", "schema_value" : "excludeSingleTypes", "type" : "checkbox", "label" : "excludeSingleTypes", "description" : "When True only correlations that have multiple type of sub-type values are returned. i.e. [auth,change] would be returned but [auth] would not.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "summaryOnly", "schema_value" : "summaryOnly", "type" : "checkbox", "label" : "summaryOnly", "description" : "When True the events returned not contain all of the corresponding event data, only summary fields will be returned [_id, score, types, subTypes, correlations].", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "idsOnly", "schema_value" : "idsOnly", "type" : "checkbox", "label" : "idsOnly", "description" : "When True the events returned will only contain the field _id.", "required" : true, "jimi_syntax" : false }
+            ],
+            "data_out" : {
+                "event._id" : { 
+                    "description" : "The correlation id.",
+                    "type" : "text",
+                    "always_present" : true,
+                    "values" : {
+
+                    }
+                },
+                "event.score" : { 
+                    "description" : "Overall correlation score.",
+                    "type" : "decimal",
+                    "always_present" : false,
+                    "values" : {
+
+                    }
+                },
+                "event.types" : { 
+                    "description" : "All types for this correlation.",
+                    "type" : "list",
+                    "always_present" : false,
+                    "values" : {
+
+                    }
+                },
+                "event.subTypes" : { 
+                    "description" : "All sub-types for this correlation.",
+                    "type" : "list",
+                    "always_present" : false,
+                    "values" : {
+
+                    }
+                },
+                "event.correlations" : { 
+                    "description" : "Correlation relationships.",
+                    "type" : "json",
+                    "always_present" : false,
+                    "values" : {
+
+                    }
+                },
+                "event.mergedID" : { 
+                    "description" : "An ID that points to a correlation that this correlation has been merged with.",
+                    "type" : "text",
+                    "always_present" : false,
+                    "values" : {
+
+                    }
+                },
+                "event.expiryTime" : { 
+                    "description" : "The epoch time for when this correlation will expire.",
+                    "type" : "number",
+                    "always_present" : false,
+                    "values" : {
+
+                    }
+                },
+                "event.correlationLastUpdate" : { 
+                    "description" : "The epoch time this correlation was last updated.",
+                    "type" : "number",
+                    "always_present" : false,
+                    "values" : {
+
+                    }
+                },
+                "event.correlationName" : { 
+                    "description" : "The name of the correlation group.",
+                    "type" : "text",
+                    "always_present" : false,
+                    "values" : {
+
+                    }
+                }
+            }
+        }
+    },
+    "actions" : {
+        "raiseEvent" : {
+            "display_name" : "_raiseEvent",
+            "className" : "_raiseEvent",
+            "class_location" : "models.action",
+            "description" : "Raise a new event based on the fields provided.",
+            "fields" : [
+                { "schema_item" : "eventTitle", "schema_value" : "eventTitle", "type" : "input", "label" : "eventTitle", "description" : "Title of event.", "required" : true, "jimi_syntax" : true },
+                { "schema_item" : "uid", "schema_value" : "uid", "type" : "input", "label" : "uid", "description" : "A UID that represents this event i.e. %%data[event][host]%%.", "required" : true, "jimi_syntax" : true },
+                { "schema_item" : "eventType", "schema_value" : "eventType", "type" : "input", "label" : "eventType", "description" : "Type of event.", "required" : true, "jimi_syntax" : true },
+                { "schema_item" : "eventSubType", "schema_value" : "eventSubType", "type" : "input", "label" : "eventSubType", "description" : "Sub-type of event.", "required" : true, "jimi_syntax" : true },
+                { "schema_item" : "impact", "schema_value" : "impact", "type" : "input", "label" : "impact", "description" : "The impact value of this event if it was malicious in nature. i.e. (minimal) 1 - 5 (high).", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "accuracy", "schema_value" : "accuracy", "type" : "input", "label" : "accuracy", "description" : "How likely this event is what it says it is. i.e. (sometimes) 1 - 5 (all the time).", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "benign", "schema_value" : "benign", "type" : "input", "label" : "benign", "description" : "How often the event is generated without it being malicious. i.e. (sometimes) 1 - 5 (all the time).", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "layer", "schema_value" : "layer", "type" : "input", "label" : "layer", "description" : "What layer of the environment would an attacker be if this was malicious. i.e. (internet edge) 1 - 10 (workstations).", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "timeToLive", "schema_value" : "timeToLive", "type" : "input", "label" : "timeToLive", "description" : "Number in seconds that the event will remain active after it has been raised but not seen again.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "eventValues", "schema_value" : "eventValues", "type" : "json-input", "label" : "eventValues", "description" : "JSON dictionary containing field matches and/or data. i.e. { \"src_ip\" : [\"%%data[event][src_ip]%%\",\"8.8.8.8\"], \"host\" : \"test\" }. This value is used for correlation actions within the event plugin.", "required" : true, "jimi_syntax" : true },
+                { "schema_item" : "history", "schema_value" : "history", "type" : "checkbox", "label" : "history", "description" : "When True history will be output into the audit log.", "required" : false, "jimi_syntax" : false }
+            ],
+            "data_out" : {
+                "result" : { 
+                    "description" : "Returns True if the action completed successfully.",
+                    "type" : "boolean",
+                    "always_present" : true,
+                    "values" : {
+                        "True" : { "description" : "Action completed successfully." },
+                        "False" : { "description" : "Action did not complete successfully, likely due to the occurrence still being committed to the database." }
+                    }
+                },
+                "rc" : {
+                    "description" : "Returns the exit code for the action.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                        "201" : { "description" : "New event raised." },
+                        "202" : { "description" : "Existing event found and updated." },
+                        "302" : { "description" : "Existing event found but no update." },
+                        "500" : { "description" : "No ID was found likely due to the occurrence still being committed to the database." }
+                    }
+                },
+                "eventIndex" : {
+                    "description" : "When an event is raised or found a reference index is returned for use within event update and other flow actions.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                        "(number)" : { "description" : "The index position of the event object." }
+                    }
+                },
+                "var.event.type" : {
+                    "description" : "Event type.",
+                    "type" : "text",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "var.event.eventSubType" : {
+                    "description" : "Event sub-type.",
+                    "type" : "text",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "var.event.layer" : {
+                    "description" : "Event layer.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "var.event.accuracy" : {
+                    "description" : "Event accuracy.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "var.event.impact" : {
+                    "description" : "Event impact.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "var.event.benign" : {
+                    "description" : "Event benign.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                }
+                ,
+                "var.event.score" : {
+                    "description" : "Event score.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                }
+            }
+        },
+        "eventUpdateScore" : {
+            "display_name" : "eventUpdateScore",
+            "className" : "_eventUpdateScore",
+            "class_location" : "models.action",
+            "description" : "Updates the score on an existing event by index.",
+            "fields" : [
+                { "schema_item" : "eventIndex", "schema_value" : "eventIndex", "type" : "input", "label" : "eventIndex", "description" : "Index number for the event object.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "impact", "schema_value" : "impact", "type" : "input", "label" : "impact", "description" : "The impact value of this event if it was malicious in nature. i.e. (minimal) 1 - 5 (high).", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "accuracy", "schema_value" : "accuracy", "type" : "input", "label" : "accuracy", "description" : "How likely this event is what it says it is. i.e. (sometimes) 1 - 5 (all the time).", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "benign", "schema_value" : "benign", "type" : "input", "label" : "benign", "description" : "How often the event is generated without it being malicious. i.e. (sometimes) 1 - 5 (all the time).", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "layer", "schema_value" : "layer", "type" : "input", "label" : "layer", "description" : "What layer of the environment would an attacker be if this was malicious. i.e. (internet edge) 1 - 10 (workstations).", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "zeroUpdate", "schema_value" : "zeroUpdate", "type" : "checkbox", "label" : "zeroUpdate", "description" : "If True then 0 values provided will be used to generated the score, otherwise the existing value for that field will be used.", "required" : true, "jimi_syntax" : false }
+            ],
+            "data_out" : {
+                "result" : { 
+                    "description" : "Boolean True or False output to represents if the result was successfully or not.",
+                    "type" : "boolean",
+                    "always_present" : true,
+                    "values" : {
+                        "True" : { "description" : "Event updated successfully." },
+                        "False" : { "description" : "Unable to update event, no event object found at provided index." }
+                    }
+                },
+                "rc" : {
+                    "description" : "Returns the exit code for the action.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                        "0" : { "description" : "Event updated successfully." },
+                        "404" : { "description" : "Unable to update event, no event object found at provided index." }
+                    }
+                },
+                "msg" : {
+                    "description" : "A message that outlines additional information about the result.",
+                    "type" : "text",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                }
+            }
+        },
+        "eventUpdate" : {
+            "display_name" : "eventUpdate",
+            "className" : "_eventUpdate",
+            "class_location" : "models.action",
+            "description" : "Updates a value on an existing event by index.",
+            "fields" : [
+                { "schema_item" : "eventIndex", "schema_value" : "eventIndex", "type" : "input", "label" : "eventIndex", "description" : "Index number for the event object.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "eventValues", "schema_value" : "eventValues", "type" : "json-input", "label" : "eventValues", "description" : "JSON dictionary of field matches to insert / update within an event. i.e. { \"src_ip\" : [\"%%data[event][src_ip]%%\",\"8.8.8.8\"], \"host\" : \"test\" }.", "required" : true, "jimi_syntax" : true },
+                { "schema_item" : "updateMode", "schema_value" : "updateMode", "type" : "input", "label" : "updateMode", "description" : "Mode (0 = Merge, 1 = Replace).", "required" : true, "jimi_syntax" : false }
+            ],
+            "data_out" : {
+                "result" : { 
+                    "description" : "Boolean True or False output to represents if the result was successfully or not.",
+                    "type" : "boolean",
+                    "always_present" : true,
+                    "values" : {
+                        "True" : { "description" : "Event updated successfully." },
+                        "False" : { "description" : "Unable to update event, no event object found at provided index." }
+                    }
+                },
+                "rc" : {
+                    "description" : "Returns the exit code for the action.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                        "0" : { "description" : "Event updated successfully." },
+                        "404" : { "description" : "Unable to update event, no event object found at provided index." }
+                    }
+                },
+                "msg" : {
+                    "description" : "A message that outlines additional information about the result.",
+                    "type" : "text",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                }
+            }
+        },
+        "eventGetCorrelations" : {
+            "display_name" : "eventGetCorrelations",
+            "className" : "_eventGetCorrelations",
+            "class_location" : "models.action",
+            "description" : "Get a list of correlations based on the provided criteria.",
+            "fields" : [
+                { "schema_item" : "correlationName", "schema_value" : "correlationName", "type" : "input", "label" : "correlationName", "description" : "Name of the correlation group to search through.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "minScore", "schema_value" : "minScore", "type" : "input", "label" : "minScore", "description" : "Only correlation overall scores higher than this value are returned.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "includeInactive", "schema_value" : "includeInactive", "type" : "checkbox", "label" : "includeInactive", "description" : "When True all correlations are returned even if they are now expired, otherwise only active are returned.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "excludeSingleTypes", "schema_value" : "excludeSingleTypes", "type" : "checkbox", "label" : "excludeSingleTypes", "description" : "When True only correlations that have multiple type of sub-type values are returned. i.e. [auth,change] would be returned but [auth] would not.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "summaryOnly", "schema_value" : "summaryOnly", "type" : "checkbox", "label" : "summaryOnly", "description" : "When True the events returned not contain all of the corresponding event data, only summary fields will be returned [_id, score, types, subTypes, correlations].", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "idsOnly", "schema_value" : "idsOnly", "type" : "checkbox", "label" : "idsOnly", "description" : "When True the events returned will only contain the field _id.", "required" : true, "jimi_syntax" : false }
+            ],
+            "data_out" : {
+                "result" : { 
+                    "description" : "Boolean True or False output to represents if the result was successfully or not.",
+                    "type" : "boolean",
+                    "always_present" : true,
+                    "values" : {
+                        "True" : { "description" : "Successful." }
+                    }
+                },
+                "rc" : {
+                    "description" : "Returns the exit code for the action.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                        "0" : { "description" : "Successful." }
+                    }
+                },
+                "correlations" : {
+                    "description" : "A JSON list of matching correlations.",
+                    "type" : "json",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlations.correlationName" : {
+                    "description" : "Name of this given correlation type i.e SIEM. This value is useful when the system is shared or you want to split up the events correlated into different areas which do not conflict with each other. Visible result depending on value of summaryOnly and idsOnly.",
+                    "type" : "text",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                },
+                "correlations.events" : {
+                    "description" : "All of the correlated events within this correlation. Visible result depending on value of summaryOnly and idsOnly.",
+                    "type" : "json",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                },
+                "correlations.ids" : {
+                    "description" : "All of the correlated event IDs within this correlation.",
+                    "type" : "list",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlations.types" : {
+                    "description" : "All of the correlated event types within this correlation. Visible result depending on value of summaryOnly and idsOnly.",
+                    "type" : "list",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                },
+                "correlations.subTypes" : {
+                    "description" : "All of the correlated event sub-types within this correlation. Visible result depending on value of summaryOnly and idsOnly.",
+                    "type" : "list",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                },
+                "correlations.correlations" : {
+                    "description" : "Matched correlations and relationships. Visible result depending on value of summaryOnly and idsOnly.",
+                    "type" : "json",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                },
+                "correlations.score" : {
+                    "description" : "The current overall score of the correlation. Visible result depending on value of summaryOnly and idsOnly.",
+                    "type" : "number",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                },
+                "correlations.correlationLastUpdate" : {
+                    "description" : "Last time the correlation was updated in epoch value. Visible result depending on value of summaryOnly and idsOnly.",
+                    "type" : "number",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                },
+                "correlations.mergedID" : {
+                    "description" : "ID of the correlation that this original correlation has merged into. Visible result depending on value of summaryOnly and idsOnly.",
+                    "type" : "text",
+                    "always_present" : false,
+                    "values" : {
+                    }
+                }
+            }
+        },
+        "eventGetCorrelation" : {
+            "display_name" : "eventGetCorrelation",
+            "className" : "_eventGetCorrelation",
+            "class_location" : "models.action",
+            "description" : "Get a correlation from UID string.",
+            "fields" : [
+                { "schema_item" : "correlationID", "schema_value" : "correlationID", "type" : "json-input", "label" : "correlationID", "description" : "Correlation UID.", "required" : true, "jimi_syntax" : false }
+            ],
+            "data_out" : {
+                "result" : { 
+                    "description" : "Boolean True or False output to represents if the result was successfully or not.",
+                    "type" : "boolean",
+                    "always_present" : true,
+                    "values" : {
+                        "True" : { "description" : "Successful." }
+                    }
+                },
+                "rc" : {
+                    "description" : "Returns the exit code for the action.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                        "0" : { "description" : "Successful." }
+                    }
+                },
+                "correlation.correlationName" : {
+                    "description" : "Name of this given correlation type i.e SIEM. This value is useful when the system is shared or you want to split up the events correlated into different areas which do not conflict with each other.",
+                    "type" : "text",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlation.events" : {
+                    "description" : "All of the correlated events within this correlation.",
+                    "type" : "json",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlation.ids" : {
+                    "description" : "All of the correlated event IDs within this correlation.",
+                    "type" : "list",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlation.types" : {
+                    "description" : "All of the correlated event types within this correlation.",
+                    "type" : "list",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlation.subTypes" : {
+                    "description" : "All of the correlated event sub-types within this correlation.",
+                    "type" : "list",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlation.correlations" : {
+                    "description" : "Matched correlations and relationships.",
+                    "type" : "json",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlation.score" : {
+                    "description" : "The current overall score of the correlation.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlation.correlationLastUpdate" : {
+                    "description" : "Last time the correlation was updated in epoch value.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlation.mergedID" : {
+                    "description" : "ID of the correlation that this original correlation has merged into.",
+                    "type" : "text",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                }
+            }
+        },
+        "eventBuildCorrelations" : {
+            "display_name" : "eventBuildCorrelations",
+            "className" : "_eventBuildCorrelations",
+            "class_location" : "models.action",
+            "description" : "Build and updates event correlations.",
+            "fields" : [
+                { "schema_item" : "correlationName", "schema_value" : "correlationName", "type" : "input", "label" : "correlationName", "description" : "Name of the correlation group to search through.", "required" : true, "jimi_syntax" : true },
+                { "schema_item" : "expiryTime", "schema_value" : "expiryTime", "type" : "input", "label" : "expiryTime", "description" : "Number in seconds that a correlation is considered alive when no updates have occurred.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "oldestEvent", "schema_value" : "oldestEvent", "type" : "input", "label" : "oldestEvent", "description" : "Number in seconds that represents how long ago to search through events.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "correlationFields", "schema_value" : "correlationFields", "type" : "json-input", "label" : "correlationFields", "description" : "List of fields to include within correlation. i.e. [\"src_ip\",\"user\"]", "required" : true, "jimi_syntax" : true },
+                { "schema_item" : "excludeCorrelationValues", "schema_value" : "excludeCorrelationValues", "type" : "json-input", "label" : "excludeCorrelationValues", "description" : "JSON dictionary of fields and value matches to exclude from correlation. i.e. { \"src_ip\" : [\"%%data[event][src_ip]%%\",\"8.8.8.8\"], \"host\" : \"test\" }.", "required" : true, "jimi_syntax" : true },
+                { "schema_item" : "alwaysProcessEvents", "schema_value" : "alwaysProcessEvents", "type" : "input", "label" : "alwaysProcessEvents", "description" : "When True attempts will be made to process every event every time. If False once an event is correlated it will be ignored unless merged.", "required" : true, "jimi_syntax" : false }
+            ],
+            "data_out" : {
+                "result" : { 
+                    "description" : "Boolean True.",
+                    "type" : "boolean",
+                    "always_present" : true,
+                    "values" : {
+                        "True" : { "description" : "Event correlation successful." }                    
+                    }
+                },
+                "rc" : {
+                    "description" : "Returns the exit code for the action.",
+                    "type" : "number",
+                    "always_present" : true,
+                    "values" : {
+                        "0" : { "description" : "Event correlation successful." }
+                    }
+                },
+                "correlatedEvents.created" : {
+                    "description" : "JSON list of new correlations created.",
+                    "type" : "json",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlatedEvents.updated" : {
+                    "description" : "JSON list of correlations updated.",
+                    "type" : "json",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                },
+                "correlatedEvents.deleted" : {
+                    "description" : "JSON list of correlations merged.",
+                    "type" : "json",
+                    "always_present" : true,
+                    "values" : {
+                    }
+                }
+            }
+        }
+    },
+    "settings" : {
+
+    }
+}
