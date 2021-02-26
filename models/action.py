@@ -264,11 +264,7 @@ class _eventBuildCorrelations(action._action):
             ids = []
             for correlatedRelationship in correlatedRelationships:
                 for idItem in correlatedRelationship.ids:
-                    # Temp due to prod errors?
-                    try:
-                        ids.append(db.ObjectId(idItem))
-                    except Exception as e:
-                        print("Unable to get mongoDB ID for: {0} - {1} - {2}".format(correlatedRelationship._id,idItem,e))
+                    ids.append(db.ObjectId(idItem))
             events = event._event().getAsClass(query={ "_id" : { "$nin" : ids }, "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
         else:
             events = event._event().getAsClass(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
@@ -399,6 +395,9 @@ class _eventBuildCorrelations(action._action):
         for correlatedRelationshipUpdated in correlatedRelationshipsUpdated:
             correlatedRelationshipUpdated.bulkUpdate(["expiryTime","ids","types","subTypes","correlations","score","events"],self.bulkClass)
             updated.append(helpers.classToJson(correlatedRelationshipUpdated,hidden=True))
+
+        self.bulkClass.bulkOperatonProcessing()
+
         delList = []
         for correlatedRelationshipDeleted in correlatedRelationshipsDeleted:
             delList.append(jimi.db.ObjectId(correlatedRelationshipDeleted._id))
