@@ -264,7 +264,11 @@ class _eventBuildCorrelations(action._action):
             ids = []
             for correlatedRelationship in correlatedRelationships:
                 for idItem in correlatedRelationship.ids:
-                    ids.append(db.ObjectId(idItem))
+                    # Temp due to prod errors?
+                    try:
+                        ids.append(db.ObjectId(idItem))
+                    except Exception as e:
+                        print("Unable to get mongoDB ID for: {0} - {1} - {2}".format(correlatedRelationship._id,idItem,e))
             events = event._event().getAsClass(query={ "_id" : { "$nin" : ids }, "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
         else:
             events = event._event().getAsClass(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })

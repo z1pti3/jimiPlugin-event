@@ -532,7 +532,7 @@
                 { "schema_item" : "oldestEvent", "schema_value" : "oldestEvent", "type" : "input", "label" : "oldestEvent", "description" : "Number in seconds that represents how long ago to search through events.", "required" : true, "jimi_syntax" : false },
                 { "schema_item" : "correlationFields", "schema_value" : "correlationFields", "type" : "json-input", "label" : "correlationFields", "description" : "List of fields to include within correlation. i.e. [\"src_ip\",\"user\"]", "required" : true, "jimi_syntax" : true },
                 { "schema_item" : "excludeCorrelationValues", "schema_value" : "excludeCorrelationValues", "type" : "json-input", "label" : "excludeCorrelationValues", "description" : "JSON dictionary of fields and value matches to exclude from correlation. i.e. { \"src_ip\" : [\"%%data[event][src_ip]%%\",\"8.8.8.8\"], \"host\" : \"test\" }.", "required" : true, "jimi_syntax" : true },
-                { "schema_item" : "alwaysProcessEvents", "schema_value" : "alwaysProcessEvents", "type" : "input", "label" : "alwaysProcessEvents", "description" : "When True attempts will be made to process every event every time. If False once an event is correlated it will be ignored unless merged.", "required" : true, "jimi_syntax" : false }
+                { "schema_item" : "alwaysProcessEvents", "schema_value" : "alwaysProcessEvents", "type" : "checkbox", "label" : "alwaysProcessEvents", "description" : "When True attempts will be made to process every event every time. If False once an event is correlated it will be ignored unless merged.", "required" : true, "jimi_syntax" : false }
             ],
             "data_out" : {
                 "result" : { 
