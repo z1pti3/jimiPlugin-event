@@ -1,7 +1,7 @@
 {
     "name" : "event",
     "author" : "z1p",
-    "version" : 1.0,
+    "version" : 1.02,
     "categories" : ["siem"],
     "description" : "Event gives jimi SIEM capability with event generation and correlation triggers and actions. Event uses a custom SIEM scoring system 'score = (( accuracy * ( impact * layer ) / benign )' enable simple adoption of Mitre Att&ck framework and custom events alike. Using Event's correlation engine makes it possible to draw links between different events and take action when thresholds are exceeded.",
     "icon" : null,
