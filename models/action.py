@@ -54,12 +54,6 @@ class _raiseEvent(action._action):
 
         data["var"]["event"] = {}
 
-        if type(data["event"]) == dict:
-            if "src_ip" in data["event"]:
-                data["var"]["event"]["src_zone"], data["var"]["event"]["src_site"] = self.zone(data["event"]["src_ip"])
-            if "dest_ip" in data["event"]:
-                data["var"]["event"]["dest_zone"], data["var"]["event"]["dest_site"] = self.zone(data["event"]["dest_ip"])
-
         data["var"]["event"]["type"] = eventType
         data["var"]["event"]["eventSubType"] = eventSubType
         data["var"]["event"]["layer"] = layer
@@ -127,17 +121,6 @@ class _raiseEvent(action._action):
         actionResult["result"] = True
         actionResult["rc"] = 201
         return actionResult
-
-    def zone(self,ip):
-        sites = static.static["sites"]
-        try:
-            for site,addressRanges in sites.items():
-                for addressRange in addressRanges:
-                    if IPAddress(ip) in IPNetwork(addressRange):
-                        return ("internal",site)
-        except:
-            pass
-        return ("internet","internet")
 
 class _eventUpdateScore(action._action):
     eventIndex = str()
@@ -278,10 +261,10 @@ class _eventBuildCorrelations(action._action):
         for correlatedRelationshipItem in correlatedRelationships:
             try:
                 for field in self.correlationFields:
-                    for value in correlatedRelationshipItem.correlations[field]:
-                        fields[field][value] = correlatedRelationshipItem
                     if field not in excludeCorrelationValues:
                         excludeCorrelationValues[field] = []
+                    for value in correlatedRelationshipItem.correlations[field]:
+                        fields[field][value] = correlatedRelationshipItem
             except KeyError:
                 pass
 
@@ -349,7 +332,7 @@ class _eventBuildCorrelations(action._action):
             correlatedFieldsHash = {}
             for correlatedRelationship in correlatedRelationships:
                 for eventField, eventValue in ((eventField, eventValue) for eventField in correlatedRelationship.correlations for eventValue in correlatedRelationship.correlations[eventField] ):
-                    if eventField in self.correlationFields and eventValue not in self.excludeCorrelationValues[eventField]:
+                    if eventField in self.correlationFields and eventValue not in excludeCorrelationValues[eventField]:
                         try:
                             if eventValue not in correlatedFieldsHash[eventField]:
                                 correlatedFieldsHash[eventField][eventValue] = correlatedRelationship
@@ -373,16 +356,15 @@ class _eventBuildCorrelations(action._action):
                                 currentCorrelation.correlationLastUpdate = int(time.time())
                                 currentCorrelation.expiryTime = expiryTime
                                 if currentCorrelation not in correlatedRelationshipsCreated and correlatedRelationship not in correlatedRelationshipsUpdated:
-                                        correlatedRelationshipsUpdated.append(currentCorrelation)
+                                    correlatedRelationshipsUpdated.append(currentCorrelation)
                                 # Deleting the eventCorrelation it was merged with
                                 if correlatedRelationship not in correlatedRelationshipsDeleted:
                                     correlatedRelationshipsDeleted.append(correlatedRelationship)
                                 if correlatedRelationship in correlatedRelationshipsUpdated:
                                     correlatedRelationshipsUpdated.remove(correlatedRelationship)
-                                if correlatedRelationship not in correlatedRelationshipsCreated:
-                                    correlatedRelationship.bulkMerge(currentCorrelation._id,self.bulkClass)
-                                else:
+                                if correlatedRelationship in correlatedRelationshipsCreated:
                                     correlatedRelationshipsCreated.remove(correlatedRelationship)
+                                correlatedRelationship.bulkMerge(currentCorrelation._id,self.bulkClass)
                                 correlatedRelationships.remove(correlatedRelationship)
                                 loop+=1
                                 break
@@ -398,14 +380,6 @@ class _eventBuildCorrelations(action._action):
         for correlatedRelationshipUpdated in correlatedRelationshipsUpdated:
             correlatedRelationshipUpdated.bulkUpdate(["expiryTime","ids","types","subTypes","correlations","score","events"],self.bulkClass)
             updated.append(helpers.classToJson(correlatedRelationshipUpdated,hidden=True))
-
-        self.bulkClass.bulkOperatonProcessing()
-
-        delList = []
-        for correlatedRelationshipDeleted in correlatedRelationshipsDeleted:
-            delList.append(jimi.db.ObjectId(correlatedRelationshipDeleted._id))
-        if len(delList) > 0:
-            event._eventCorrelation()._dbCollection.delete_many({ "_id" : { "$in" : delList } })
 
         self.bulkClass.bulkOperatonProcessing()
 

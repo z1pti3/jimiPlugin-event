@@ -36,7 +36,7 @@ def getEventCorrelation(eventCorrelationID):
     
     nodesDict = {}
     edgesDict = {}
-    for sourceEvent in eventCorrelation.events[0:100]:
+    for sourceEvent in eventCorrelation.events:
         try:
             label = sourceEvent["eventTitle"]
             if label == "":
