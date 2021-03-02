@@ -8,6 +8,8 @@ import random
 from core import api
 from plugins.event.models import event
 
+import jimi
+
 pluginPages = Blueprint('eventPages', __name__, template_folder="templates")
 
 @pluginPages.route("/event/")
@@ -34,9 +36,16 @@ def getEventCorrelation(eventCorrelationID):
         else:
             break
     
+    eventIDS = []
+    for eventID in eventCorrelation.ids:
+        eventIDS.append(jimi.db.ObjectId(eventID))
+
+    events = event._event().query(sessionData=api.g.sessionData,query={ "_id" : { "$in" : eventIDS } })["results"]
+
     nodesDict = {}
     edgesDict = {}
-    for sourceEvent in eventCorrelation.events:
+
+    for sourceEvent in events:
         try:
             label = sourceEvent["eventTitle"]
             if label == "":

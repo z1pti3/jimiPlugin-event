@@ -259,14 +259,14 @@ class _eventBuildCorrelations(action._action):
             if field not in excludeCorrelationValues:
                 excludeCorrelationValues[field] = []
         for correlatedRelationshipItem in correlatedRelationships:
-            try:
-                for field in self.correlationFields:
+            for field in self.correlationFields:
+                try:
                     if field not in excludeCorrelationValues:
                         excludeCorrelationValues[field] = []
                     for value in correlatedRelationshipItem.correlations[field]:
                         fields[field][value] = correlatedRelationshipItem
-            except KeyError:
-                pass
+                except KeyError:
+                    pass
 
         correlatedRelationshipsCreated = []
         correlatedRelationshipsUpdated = []
@@ -276,6 +276,7 @@ class _eventBuildCorrelations(action._action):
         for eventItem in events:
             foundCorrelatedRelationship = None
             correlations = {}
+            processNew = False
             for eventField in eventItem.eventValues:
                 try:
                     if type(eventItem.eventValues[eventField]) is list:
@@ -283,16 +284,23 @@ class _eventBuildCorrelations(action._action):
                         matchFound = [ fields[eventField][x] for x in eventItem.eventValues[eventField] if eventField in self.correlationFields and x in fields[eventField] and x not in excludeCorrelationValues[eventField] ]
                         if len(matchFound) > 0:
                             foundCorrelatedRelationship = matchFound[0]
+                        else:
+                            matchFound = [ fields[eventField][x] for x in eventItem.eventValues[eventField] if eventField in self.correlationFields and x and x not in excludeCorrelationValues[eventField] ]
+                            if len(matchFound) > 0:
+                                processNew = True
                     else:
                         correlations[eventField] = [eventItem.eventValues[eventField]]
                         if eventField in self.correlationFields and eventItem.eventValues[eventField] in fields[eventField] and eventItem.eventValues[eventField] not in excludeCorrelationValues[eventField]:
                             foundCorrelatedRelationship = fields[eventField][eventItem.eventValues[eventField]]
+                        else:
+                            if eventField in self.correlationFields and eventItem.eventValues[eventField] and eventItem.eventValues[eventField] not in excludeCorrelationValues[eventField]:
+                                processNew = True
                 except KeyError:
                     pass
             # Create new
-            if foundCorrelatedRelationship == None:
+            if processNew == True:
                 newEventCorrelation = event._eventCorrelation()
-                newEventCorrelation.bulkNew(self.bulkClass, self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,eventItem.score,[jimi.helpers.classToJson(eventItem,hidden=True)])
+                newEventCorrelation.bulkNew(self.bulkClass, self.acl, correlationName,expiryTime,[eventItem._id],[eventItem.eventType],[eventItem.eventSubType],correlations,eventItem.score)
                 correlatedRelationshipsCreated.append(newEventCorrelation)
                 correlatedRelationships.append(newEventCorrelation)
                 for eventField in eventItem.eventValues:
@@ -305,7 +313,7 @@ class _eventBuildCorrelations(action._action):
                     except KeyError:
                         pass
             # Merge existing
-            else:
+            elif foundCorrelatedRelationship != None:
                 for eventField in correlations:
                     try:
                         foundCorrelatedRelationship.correlations[eventField] += correlations[eventField]
@@ -315,7 +323,6 @@ class _eventBuildCorrelations(action._action):
                 if eventItem._id not in foundCorrelatedRelationship.ids:
                     foundCorrelatedRelationship.ids.append(eventItem._id)
                     foundCorrelatedRelationship.score += eventItem.score
-                    foundCorrelatedRelationship.events.append(jimi.helpers.classToJson(eventItem,hidden=True))
                 if eventItem.eventType not in foundCorrelatedRelationship.types:
                     foundCorrelatedRelationship.types.append(eventItem.eventType)
                 if eventItem.eventSubType not in foundCorrelatedRelationship.subTypes:
@@ -324,6 +331,9 @@ class _eventBuildCorrelations(action._action):
                 foundCorrelatedRelationship.expiryTime = expiryTime
                 if foundCorrelatedRelationship not in correlatedRelationshipsCreated and foundCorrelatedRelationship not in correlatedRelationshipsUpdated:
                     correlatedRelationshipsUpdated.append(foundCorrelatedRelationship)
+
+        # Process bulk creation if needed before merging
+        self.bulkClass.bulkOperatonProcessing()
   
         # Reduction Loop
         loop = 1
@@ -348,10 +358,6 @@ class _eventBuildCorrelations(action._action):
                                     for value in getattr(correlatedRelationship,mergeKey):
                                         if value not in getattr(currentCorrelation,mergeKey):
                                             getattr(currentCorrelation,mergeKey).append(value)
-                                    if mergeKey == "ids":
-                                        for eventItem in correlatedRelationship.events:
-                                            if eventItem not in currentCorrelation.events:
-                                                currentCorrelation.events.append(eventItem)
                                 currentCorrelation.score += correlatedRelationship.score
                                 currentCorrelation.correlationLastUpdate = int(time.time())
                                 currentCorrelation.expiryTime = expiryTime
@@ -378,7 +384,7 @@ class _eventBuildCorrelations(action._action):
         deleted = [ helpers.classToJson(x,hidden=True) for x in correlatedRelationshipsDeleted ]
 
         for correlatedRelationshipUpdated in correlatedRelationshipsUpdated:
-            correlatedRelationshipUpdated.bulkUpdate(["expiryTime","ids","types","subTypes","correlations","score","events"],self.bulkClass)
+            correlatedRelationshipUpdated.bulkUpdate(["expiryTime","ids","types","subTypes","correlations","score"],self.bulkClass)
             updated.append(helpers.classToJson(correlatedRelationshipUpdated,hidden=True))
 
         self.bulkClass.bulkOperatonProcessing()
