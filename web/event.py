@@ -12,22 +12,31 @@ import jimi
 
 pluginPages = Blueprint('eventPages', __name__, template_folder="templates")
 
-@pluginPages.route("/event/")
+@pluginPages.route("/")
 def mainPage():
+    return render_template("home.html")
+
+@pluginPages.route("/events/")
+def eventsPage():
     findActiveEvents = event._event().getAsClass(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })
     return render_template("event.html", events=findActiveEvents)
 
-@pluginPages.route("/event/<eventID>/")
+@pluginPages.route("/events/<eventID>/")
 def getEvent(eventID):
     foundEvent = event._event().query(sessionData=api.g.sessionData,id=eventID)["results"][0]
     return foundEvent, 200
 
-@pluginPages.route("/event/eventCorrelation/<eventCorrelationID>/")
+@pluginPages.route("/eventCorrelations/")
+def eventCorrelationsPage():
+    findActiveEvents = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })
+    return render_template("eventCorrelations.html", eventCorrelations=findActiveEvents)
+
+@pluginPages.route("/eventCorrelations/<eventCorrelationID>/")
 def eventCorrelationPage(eventCorrelationID):
     return render_template("eventCorrelation.html")
 
 
-@pluginPages.route("/event/eventCorrelation/<eventCorrelationID>/get/")
+@pluginPages.route("/eventCorrelations/<eventCorrelationID>/get/")
 def getEventCorrelation(eventCorrelationID):
     while True:
         eventCorrelation = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,id=eventCorrelationID)[0]
