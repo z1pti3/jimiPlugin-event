@@ -8,7 +8,12 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='includes/bootstrap-3.3.7/css/bootstrap.min.css') }}">
 <script src="{{ url_for('static', filename='includes/bootstrap-3.3.7/js/bootstrap.min.js') }}"></script>
 
+<script src="{{ url_for('static', filename='includes/visjs/js/vis-data.min.js') }}"></script>
+<script src="{{ url_for('static', filename='includes/visjs/js/moment.js') }}"></script>
+<script src="{{ url_for('static', filename='includes/visjs/js/vis-timeline-graph2d.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='includes/visjs/css/vis-timeline-graph2d.min.css') }}">
 <script src="{{ url_for('static', filename='includes/visjs/js/vis-network.min.js') }}"></script>
+
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/conductEditor.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/objectProperties.css') }}">
@@ -25,6 +30,7 @@
     </head>
     <body class="theme-panelContainer">
         <button onclick="closeCorrelation()" class="btn btn-primary importConductButton theme-panelButton">Close</button>
+        <div id="timeline" style="height: 200px;"></div>
         <div class="flowchart theme-content" id="map"></div>
     </body>
 </html>
@@ -33,6 +39,10 @@
     $( document ).ready(function() {
         $.ajax({url:"get/", type:"GET", success: function ( result ) {
                 buildNetwork(result,"map")
+            }
+        });
+        $.ajax({url:"getTimeline/", type:"GET", success: function ( result ) {
+                buildTimeline(result["results"],"timeline")
             }
         });
     })
@@ -175,5 +185,15 @@
             });
         }
     }
+</script>
 
+<script>
+    function buildTimeline(data,HTMLElementID) {  
+        data = new vis.DataSet(data);      
+        var container = document.getElementById(HTMLElementID);
+        var options = {
+            height: 200,
+        };
+        var timeline = new vis.Timeline(container, data, options);
+    }
 </script>

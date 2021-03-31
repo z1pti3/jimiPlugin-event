@@ -86,6 +86,35 @@ def getEventCorrelation(eventCorrelationID):
 
     return { "nodes" : nodes, "edges" : edges }, 200
 
+@pluginPages.route("/eventCorrelations/<eventCorrelationID>/getTimeline/")
+def getEventCorrelationTimeline(eventCorrelationID):
+    while True:
+        eventCorrelation = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,id=eventCorrelationID)[0]
+        if eventCorrelation.mergedID != "":
+            eventCorrelationID = eventCorrelation.mergedID
+        else:
+            break
+    
+    eventIDS = []
+    for eventID in eventCorrelation.ids:
+        eventIDS.append(jimi.db.ObjectId(eventID))
+
+    events = event._event().query(sessionData=api.g.sessionData,query={ "_id" : { "$in" : eventIDS } })["results"]
+
+    timeline = []
+
+    for sourceEvent in events:
+        try:
+            label = sourceEvent["eventTitle"]
+            if label == "":
+                label = sourceEvent["uid"]
+        except KeyError:
+            label = sourceEvent["uid"]
+        formatted_date = time.strftime('%Y-%m-%d %H:%M:%S',  time.localtime(sourceEvent["eventRaiseTime"]))
+        timeline.append({ "id" : len(timeline), "content" : label, "start" : formatted_date })
+
+    return { "results" : timeline }, 200
+
 @pluginPages.route("/eventCorrelations/<eventCorrelationID>/close/")
 def getEvent(eventCorrelationID):
     while True:
