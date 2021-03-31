@@ -91,7 +91,7 @@
                 panel.remove();
             })
 
-            $.ajax({url:"/plugin/event/"+id+"/", type:"GET", success: function ( result ) {
+            $.ajax({url:"events/"+id+"/", type:"GET", success: function ( result ) {
                     panel.find("#openRelationshipPanelValue").val(JSON.stringify(result));
                 }
             });

@@ -21,11 +21,6 @@ def eventsPage():
     findActiveEvents = event._event().getAsClass(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })
     return render_template("event.html", events=findActiveEvents)
 
-@pluginPages.route("/events/<eventID>/")
-def getEvent(eventID):
-    foundEvent = event._event().query(sessionData=api.g.sessionData,id=eventID)["results"][0]
-    return foundEvent, 200
-
 @pluginPages.route("/eventCorrelations/")
 def eventCorrelationsPage():
     findActiveEvents = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })
@@ -62,7 +57,7 @@ def getEventCorrelation(eventCorrelationID):
         except KeyError:
             label = sourceEvent["uid"]
         if label not in nodesDict:
-            nodesDict[label] = { "id" : sourceEvent["uid"], "label" : label, "value" : 1 }
+            nodesDict[label] = { "id" : sourceEvent["uid"], "label" : label, "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
         else:
             nodesDict[label]["value"] += 1
 
@@ -91,6 +86,19 @@ def getEventCorrelation(eventCorrelationID):
 
     return { "nodes" : nodes, "edges" : edges }, 200
 
+@pluginPages.route("/eventCorrelations/<eventCorrelationID>/events/<eventUID>/")
+def getEvent(eventCorrelationID,eventUID):
+    while True:
+        eventCorrelation = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,id=eventCorrelationID)[0]
+        if eventCorrelation.mergedID != "":
+            eventCorrelationID = eventCorrelation.mergedID
+        else:
+            break
+    
+    eventIDS = []
+    for eventID in eventCorrelation.ids:
+        eventIDS.append(jimi.db.ObjectId(eventID))
 
-
+    events = event._event().query(sessionData=api.g.sessionData,query={ "_id" : { "$in" : eventIDS }, "uid" : eventUID })
+    return events, 200
 
