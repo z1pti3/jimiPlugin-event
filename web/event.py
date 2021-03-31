@@ -86,8 +86,20 @@ def getEventCorrelation(eventCorrelationID):
 
     return { "nodes" : nodes, "edges" : edges }, 200
 
+@pluginPages.route("/eventCorrelations/<eventCorrelationID>/close/")
+def getEvent(eventCorrelationID):
+    while True:
+        eventCorrelation = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,id=eventCorrelationID)[0]
+        if eventCorrelation.mergedID != "":
+            eventCorrelationID = eventCorrelation.mergedID
+        else:
+            break
+    eventCorrelation.expiryTime = 0
+    eventCorrelation.update(["expiryTime"],sessionData=api.g.sessionData)
+    return { }, 200
+
 @pluginPages.route("/eventCorrelations/<eventCorrelationID>/events/<eventUID>/")
-def getEvent(eventCorrelationID,eventUID):
+def closeCorrelation(eventCorrelationID,eventUID):
     while True:
         eventCorrelation = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,id=eventCorrelationID)[0]
         if eventCorrelation.mergedID != "":

@@ -10,6 +10,7 @@
 
 <script src="{{ url_for('static', filename='includes/visjs/js/vis-network.min.js') }}"></script>
 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/conductEditor.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/objectProperties.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='themes/default/default.css') }}">
 
@@ -23,6 +24,7 @@
         
     </head>
     <body class="theme-panelContainer">
+        <button onclick="closeCorrelation()" class="btn btn-primary importConductButton theme-panelButton">Close</button>
         <div class="flowchart theme-content" id="map"></div>
     </body>
 </html>
@@ -164,4 +166,14 @@
             return true;
         });
     }
+
+    function closeCorrelation() {
+        if (confirm("Are you sure you want to permanently close this correlation?")) {
+            $.ajax({url:"close/", type:"GET", success: function ( result ) {
+                    window.open("/plugin/event/eventCorrelations/","_self");
+                }
+            });
+        }
+    }
+
 </script>
