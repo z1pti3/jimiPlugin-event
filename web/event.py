@@ -18,18 +18,17 @@ def mainPage():
 
 @pluginPages.route("/events/")
 def eventsPage():
-    findActiveEvents = event._event().getAsClass(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })
+    findActiveEvents = event._event().query(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })["results"]
     return render_template("event.html", events=findActiveEvents)
 
 @pluginPages.route("/eventCorrelations/")
 def eventCorrelationsPage():
-    findActiveEvents = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })
+    findActiveEvents = event._eventCorrelation().query(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })["results"]
     return render_template("eventCorrelations.html", eventCorrelations=findActiveEvents)
 
 @pluginPages.route("/eventCorrelations/<eventCorrelationID>/")
 def eventCorrelationPage(eventCorrelationID):
     return render_template("eventCorrelation.html")
-
 
 @pluginPages.route("/eventCorrelations/<eventCorrelationID>/get/")
 def getEventCorrelation(eventCorrelationID):

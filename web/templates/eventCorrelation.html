@@ -30,7 +30,7 @@
     </head>
     <body class="theme-panelContainer">
         <button onclick="closeCorrelation()" class="btn btn-primary importConductButton theme-panelButton">Close</button>
-        <div id="timeline" style="height: 200px;"></div>
+        <div id="timeline"></div>
         <div class="flowchart theme-content" id="map"></div>
     </body>
 </html>
@@ -189,11 +189,13 @@
 
 <script>
     function buildTimeline(data,HTMLElementID) {  
-        data = new vis.DataSet(data);      
-        var container = document.getElementById(HTMLElementID);
-        var options = {
-            height: 200,
-        };
-        var timeline = new vis.Timeline(container, data, options);
+        if (data.length < 500) {
+            data = new vis.DataSet(data);      
+            var container = document.getElementById(HTMLElementID);
+            var options = {
+                height: 200,
+            };
+            var timeline = new vis.Timeline(container, data, options);
+        }
     }
 </script>
