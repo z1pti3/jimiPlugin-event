@@ -340,7 +340,8 @@
                 { "schema_item" : "includeInactive", "schema_value" : "includeInactive", "type" : "checkbox", "label" : "includeInactive", "description" : "When True all correlations are returned even if they are now expired, otherwise only active are returned.", "required" : true, "jimi_syntax" : false },
                 { "schema_item" : "excludeSingleTypes", "schema_value" : "excludeSingleTypes", "type" : "checkbox", "label" : "excludeSingleTypes", "description" : "When True only correlations that have multiple type of sub-type values are returned. i.e. [auth,change] would be returned but [auth] would not.", "required" : true, "jimi_syntax" : false },
                 { "schema_item" : "summaryOnly", "schema_value" : "summaryOnly", "type" : "checkbox", "label" : "summaryOnly", "description" : "When True the events returned not contain all of the corresponding event data, only summary fields will be returned [_id, score, types, subTypes, correlations].", "required" : true, "jimi_syntax" : false },
-                { "schema_item" : "idsOnly", "schema_value" : "idsOnly", "type" : "checkbox", "label" : "idsOnly", "description" : "When True the events returned will only contain the field _id.", "required" : true, "jimi_syntax" : false }
+                { "schema_item" : "idsOnly", "schema_value" : "idsOnly", "type" : "checkbox", "label" : "idsOnly", "description" : "When True the events returned will only contain the field _id.", "required" : true, "jimi_syntax" : false },
+                { "schema_item" : "multiTypeMultiplier", "schema_value" : "multiTypeMultiplier", "type" : "input", "label" : "multiTypeMultiplier", "description" : "When greater than 1 this value is used to multiply the score by the number of types and subtypes.", "required" : false, "jimi_syntax" : false }   
             ],
             "data_out" : {
                 "result" : { 

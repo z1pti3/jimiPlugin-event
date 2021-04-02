@@ -218,11 +218,9 @@ class _eventGetCorrelations(action._action):
             correlatedRelationships = [ x["_id"] for x in correlatedRelationships ]
         if self.multiTypeMultiplier > 1:
             for correlatedRelationship in correlatedRelationships:
-                try:
-                    score = correlatedRelationship["score"] * ((len(correlatedRelationship["types"]) -1 + len(correlatedRelationship["subTypes"]) -1 ) * self.multiTypeMultiplier)
-                except ZeroDivisionError:
-                    score = correlatedRelationship["score"]
-                correlatedRelationship["score"] = score
+                multiplier = ((len(correlatedRelationship["types"]) -1 + len(correlatedRelationship["subTypes"]) -1 ) * self.multiTypeMultiplier)
+                if multiplier > 0:
+                    correlatedRelationship["score"] = correlatedRelationship["score"] * multiplier
         actionResult["result"] = True
         actionResult["rc"] = 0
         actionResult["correlations"] = correlatedRelationships
