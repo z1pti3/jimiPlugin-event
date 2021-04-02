@@ -27,13 +27,20 @@ class _raiseEvent(action._action):
         self.bulkClass = db._bulk()
 
     def __del__(self):
-        events = cache.globalCache.getAll("eventCache")
-        popList = []
-        for eventKey, eventValue in events.items():
-            if eventValue["objectValue"].expiryTime < time.time():
-                popList.append(eventKey)
-        for popItem in popList:
-            cache.globalCache.delete("eventCache",popItem)
+        events = []
+        try:
+            events = cache.globalCache.getAll("eventCache")
+            popList = []
+            for eventKey, eventValue in events.items():
+                if eventValue["objectValue"] and eventValue["objectValue"].expiryTime < time.time():
+                    popList.append(eventKey)
+                elif not eventValue["objectValue"]:
+                    popList.append(eventKey)
+            for popItem in popList:
+                cache.globalCache.delete("eventCache",popItem)
+        except:
+            print(1)
+            pass
 
     def postRun(self):
         self.bulkClass.bulkOperatonProcessing()
@@ -244,11 +251,11 @@ class _eventBuildCorrelations(action._action):
         correlatedRelationships = event._eventCorrelation().getAsClass(query={ "correlationName" : correlationName, "expiryTime" : { "$gt" : int(time.time()) } })
         eventsAfterTime = int(time.time()) - self.oldestEvent
         if not self.alwaysProcessEvents:
-            ids = []
-            for correlatedRelationship in correlatedRelationships:
-                for idItem in correlatedRelationship.ids:
-                    ids.append(db.ObjectId(idItem))
-            events = event._event().getAsClass(query={ "_id" : { "$nin" : ids }, "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
+            ids = event._eventCorrelation()._dbCollection.distinct("ids",{ "$or" : [ { "expiryTime" : { "$gt" : int(time.time()) } }, { "lastUpdateTime" : { "$gt" : eventsAfterTime } } ] })
+            objectIds = []
+            for idItem in ids:
+                objectIds.append(db.ObjectId(idItem))
+            events = event._event().getAsClass(query={ "_id" : { "$nin" : objectIds }, "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
         else:
             events = event._event().getAsClass(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
         
