@@ -38,9 +38,8 @@ class _raiseEvent(action._action):
                     popList.append(eventKey)
             for popItem in popList:
                 cache.globalCache.delete("eventCache",popItem)
-        except:
-            print(1)
-            pass
+        except Exception as e:
+            print(e)
 
     def postRun(self):
         self.bulkClass.bulkOperatonProcessing()
@@ -203,6 +202,7 @@ class _eventGetCorrelations(action._action):
     minScore = float()
     idsOnly = bool()
     summaryOnly = bool()
+    multiTypeMultiplier = 1
 
     def run(self,data,persistentData,actionResult):
         correlationName = helpers.evalString(self.correlationName,{"data" : data})
@@ -216,6 +216,13 @@ class _eventGetCorrelations(action._action):
             correlatedRelationships = [  { "_id" : x["_id"], "score" : x["score"], "types" : x["types"], "subTypes" : x["subTypes"], "correlations" : x["correlations"] } for x in correlatedRelationships ]
         if self.idsOnly:
             correlatedRelationships = [ x["_id"] for x in correlatedRelationships ]
+        if self.multiTypeMultiplier > 1:
+            for correlatedRelationship in correlatedRelationships:
+                try:
+                    score = correlatedRelationship["score"] * ((len(correlatedRelationship["types"]) -1 + len(correlatedRelationship["subTypes"]) -1 ) * self.multiTypeMultiplier)
+                except ZeroDivisionError:
+                    score = correlatedRelationship["score"]
+                correlatedRelationship["score"] = score
         actionResult["result"] = True
         actionResult["rc"] = 0
         actionResult["correlations"] = correlatedRelationships
