@@ -133,7 +133,7 @@
                 improvedLayout: false
             },
             physics: {
-                enabled: false,
+                enabled: true,
                 timestep: 1,
                 solver: "repulsion",
                 repulsion: {
@@ -168,7 +168,7 @@
             }
         };
         network = new vis.Network(container, data, options);
-        network.stabilize(5000);
+        network.stabilize(50);
         network.on("doubleClick", function(params) {
             if ((params["nodes"].length == 1)) {
                 openRelationshipPanel(params["nodes"][0])
