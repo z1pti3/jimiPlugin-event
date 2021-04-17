@@ -192,7 +192,10 @@ class _eventUpdate(action._action):
                         if key in currentEvent.eventValues:
                             if type(currentEvent.eventValues[key]) != list:
                                 currentEvent.eventValues[key] = [currentEvent.eventValues[key]]
-                            currentEvent.eventValues[key].append(value)
+                            if type(value) is list:
+                                currentEvent.eventValues[key] += value
+                            else:
+                                currentEvent.eventValues[key].append(value)
                         else:
                             currentEvent.eventValues[key] = value
             currentEvent.update(["eventValues"])
