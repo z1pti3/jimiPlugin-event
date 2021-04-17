@@ -188,12 +188,13 @@ class _eventUpdate(action._action):
                 currentEvent.eventValues = eventValues
             elif self.updateMode == 2:
                 for key, value in eventValues.items():
-                    if key in currentEvent.eventValues:
-                        if type(currentEvent.eventValues[key]) != list:
-                            currentEvent.eventValues[key] = [currentEvent.eventValues[key]]
-                        currentEvent.eventValues[key].append(value)
-                    else:
-                        currentEvent.eventValues[key] = value
+                    if value:
+                        if key in currentEvent.eventValues:
+                            if type(currentEvent.eventValues[key]) != list:
+                                currentEvent.eventValues[key] = [currentEvent.eventValues[key]]
+                            currentEvent.eventValues[key].append(value)
+                        else:
+                            currentEvent.eventValues[key] = value
             currentEvent.update(["eventValues"])
             actionResult["result"] = True
             actionResult["rc"] = 0
