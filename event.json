@@ -1,7 +1,7 @@
 {
     "name" : "event",
     "author" : "z1p",
-    "version" : 1.03,
+    "version" : 1.05,
     "categories" : ["siem"],
     "description" : "Event gives jimi SIEM capability with event generation and correlation triggers and actions. Event uses a custom SIEM scoring system 'score = (( accuracy * ( impact * layer ) / benign )' enable simple adoption of Mitre Att&ck framework and custom events alike. Using Event's correlation engine makes it possible to draw links between different events and take action when thresholds are exceeded.",
     "icon" : null,
@@ -167,7 +167,8 @@
                 { "schema_item" : "layer", "schema_value" : "layer", "type" : "input", "label" : "layer", "description" : "What layer of the environment would an attacker be if this was malicious. i.e. (internet edge) 1 - 10 (workstations).", "required" : true, "jimi_syntax" : false },
                 { "schema_item" : "timeToLive", "schema_value" : "timeToLive", "type" : "input", "label" : "timeToLive", "description" : "Number in seconds that the event will remain active after it has been raised but not seen again.", "required" : true, "jimi_syntax" : false },
                 { "schema_item" : "eventValues", "schema_value" : "eventValues", "type" : "json-input", "label" : "eventValues", "description" : "JSON dictionary containing field matches and/or data. i.e. { \"src_ip\" : [\"%%data[event][src_ip]%%\",\"8.8.8.8\"], \"host\" : \"test\" }. This value is used for correlation actions within the event plugin.", "required" : true, "jimi_syntax" : true },
-                { "schema_item" : "history", "schema_value" : "history", "type" : "checkbox", "label" : "history", "description" : "When True history will be output into the audit log.", "required" : false, "jimi_syntax" : false }
+                { "schema_item" : "history", "schema_value" : "history", "type" : "checkbox", "label" : "history", "description" : "When True history will be output into the audit log.", "required" : false, "jimi_syntax" : false },
+		{ "schema_item" : "updateValues", "schema_value" : "updateValues", "type" : "checkbox", "label" : "updateValues", "description" : "When True changes to the eventValue will be updated during event updates, otherwise eventValue will remain as set when the event was rasied.", "required" : false, "jimi_syntax" : false }
             ],
             "data_out" : {
                 "result" : { 
@@ -299,7 +300,7 @@
             "fields" : [
                 { "schema_item" : "eventIndex", "schema_value" : "eventIndex", "type" : "input", "label" : "eventIndex", "description" : "Index number for the event object.", "required" : true, "jimi_syntax" : false },
                 { "schema_item" : "eventValues", "schema_value" : "eventValues", "type" : "json-input", "label" : "eventValues", "description" : "JSON dictionary of field matches to insert / update within an event. i.e. { \"src_ip\" : [\"%%data[event][src_ip]%%\",\"8.8.8.8\"], \"host\" : \"test\" }.", "required" : true, "jimi_syntax" : true },
-                { "schema_item" : "updateMode", "schema_value" : "updateMode", "type" : "input", "label" : "updateMode", "description" : "Mode (0 = Merge, 1 = Replace).", "required" : true, "jimi_syntax" : false }
+                { "schema_item" : "updateMode", "schema_value" : "updateMode", "type" : "input", "label" : "updateMode", "description" : "Mode (0 = Merge, 1 = Replace, 2 = Merge and Merge Field Values).", "required" : true, "jimi_syntax" : false }
             ],
             "data_out" : {
                 "result" : { 
