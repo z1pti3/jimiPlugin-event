@@ -22,6 +22,8 @@ class _raiseEvent(action._action):
 
     eventTitle = str()
 
+    updateValues = False
+
     def __init__(self):
         cache.globalCache.newCache("eventCache")
         self.bulkClass = db._bulk()
@@ -94,7 +96,7 @@ class _raiseEvent(action._action):
                             changes = True
                             break
                         
-                    if changes:
+                    if changes and self.updateValues:
                         foundEvent.updateRecord(self.bulkClass,eventValues,accuracy,impact,layer,benign,score,int( time.time() + timeToLive ),self.history)
                   
                         actionResult["result"] = True
@@ -186,6 +188,18 @@ class _eventUpdate(action._action):
                     currentEvent.eventValues[key] = value
             elif self.updateMode == 1:
                 currentEvent.eventValues = eventValues
+            elif self.updateMode == 2:
+                for key, value in eventValues.items():
+                    if value:
+                        if key in currentEvent.eventValues:
+                            if type(currentEvent.eventValues[key]) != list:
+                                currentEvent.eventValues[key] = [currentEvent.eventValues[key]]
+                            if type(value) is list:
+                                currentEvent.eventValues[key] += value
+                            else:
+                                currentEvent.eventValues[key].append(value)
+                        else:
+                            currentEvent.eventValues[key] = value
             currentEvent.update(["eventValues"])
             actionResult["result"] = True
             actionResult["rc"] = 0
