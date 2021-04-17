@@ -1,7 +1,7 @@
 from core import plugin, model
 
 class _event(plugin._plugin):
-    version = 1.05
+    version = 1.2
 
     def install(self):
         # Register models
@@ -42,3 +42,4 @@ class _event(plugin._plugin):
             model.registerModel("eventBuildCorrelations","_eventBuildCorrelations","_action","plugins.event.models.action")
         if self.version < 0.7:
             model.registerModel("eventGetCorrelation","_eventGetCorrelation","_action","plugins.event.models.action")
+        return True

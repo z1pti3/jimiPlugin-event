@@ -22,7 +22,7 @@ class _raiseEvent(action._action):
 
     eventTitle = str()
 
-    updateValues = False
+    updateValues = bool()
 
     def __init__(self):
         cache.globalCache.newCache("eventCache")
