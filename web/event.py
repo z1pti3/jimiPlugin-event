@@ -23,7 +23,7 @@ def eventsPage():
 
 @pluginPages.route("/eventCorrelations/")
 def eventCorrelationsPage():
-    findActiveEvents = event._eventCorrelation().query(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })["results"]
+    findActiveEvents = event._eventCorrelation().query(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() }, "$where" : "this.ids.length>1" })["results"]
     return render_template("eventCorrelations.html", eventCorrelations=findActiveEvents)
 
 @pluginPages.route("/eventCorrelations/<eventCorrelationID>/")
