@@ -23,7 +23,7 @@ def eventsPage():
 
 @pluginPages.route("/eventCorrelations/")
 def eventCorrelationsPage():
-    findActiveEvents = event._eventCorrelation().query(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })["results"]
+    findActiveEvents = event._eventCorrelation().query(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() }, "$where" : "this.ids.length>1" })["results"]
     return render_template("eventCorrelations.html", eventCorrelations=findActiveEvents)
 
 @pluginPages.route("/eventCorrelations/<eventCorrelationID>/")
@@ -56,7 +56,7 @@ def getEventCorrelation(eventCorrelationID):
         except KeyError:
             label = sourceEvent["uid"]
         if label not in nodesDict:
-            nodesDict[label] = { "id" : sourceEvent["uid"], "label" : label, "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
+            nodesDict[label] = { "id" : label, "label" : label, "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
         else:
             nodesDict[label]["value"] += 1
 
