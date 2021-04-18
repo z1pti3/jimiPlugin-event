@@ -1,7 +1,7 @@
 from core import plugin, model
 
 class _event(plugin._plugin):
-    version = 1.2
+    version = 1.21
 
     def install(self):
         # Register models

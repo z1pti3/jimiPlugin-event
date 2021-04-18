@@ -258,6 +258,7 @@ class _eventBuildCorrelations(action._action):
     correlationFields = list()
     excludeCorrelationValues = dict()
     alwaysProcessEvents = bool()
+    ignoreScoreLessThan = int()
 
     def __init__(self):
         self.bulkClass = db._bulk()
@@ -274,9 +275,13 @@ class _eventBuildCorrelations(action._action):
             objectIds = []
             for idItem in ids:
                 objectIds.append(db.ObjectId(idItem))
-            events = event._event().getAsClass(query={ "_id" : { "$nin" : objectIds }, "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
+            eventSearch = { "_id" : { "$nin" : objectIds }, "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } }
         else:
-            events = event._event().getAsClass(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
+            eventSearch = { "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } }
+            
+        if self.ignoreScoreLessThan > 0:
+            eventSearch["score"] = { "$gt" : self.ignoreScoreLessThan }
+        events = event._event().getAsClass(query=eventSearch)
         
         # Build correlation field hash table
         fields = {}
