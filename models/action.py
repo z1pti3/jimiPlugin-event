@@ -258,7 +258,6 @@ class _eventBuildCorrelations(action._action):
     correlationFields = list()
     excludeCorrelationValues = dict()
     alwaysProcessEvents = bool()
-    ignoreScoreLessThan = int()
 
     def __init__(self):
         self.bulkClass = db._bulk()
@@ -275,13 +274,9 @@ class _eventBuildCorrelations(action._action):
             objectIds = []
             for idItem in ids:
                 objectIds.append(db.ObjectId(idItem))
-            eventSearch = { "_id" : { "$nin" : objectIds }, "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } }
+            events = event._event().getAsClass(query={ "_id" : { "$nin" : objectIds }, "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
         else:
-            eventSearch = { "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } }
-            
-        if self.ignoreScoreLessThan > 0:
-            eventSearch["score"] = { "$gt" : self.ignoreScoreLessThan }
-        events = event._event().getAsClass(query=eventSearch)
+            events = event._event().getAsClass(query={ "expiryTime" : { "$gt" : eventsAfterTime }, "eventFields" : { "$in" : self.correlationFields } })
         
         # Build correlation field hash table
         fields = {}
@@ -305,6 +300,10 @@ class _eventBuildCorrelations(action._action):
 
         # Initial Pass Loop
         for eventItem in events:
+            d = False
+            if eventItem._id == "607c78f6233eb75b85f99c52":
+                print(eventItem)
+                d = True
             foundCorrelatedRelationship = None
             correlations = {}
             processNew = False
@@ -312,11 +311,13 @@ class _eventBuildCorrelations(action._action):
                 try:
                     if type(eventItem.eventValues[eventField]) is list:
                         correlations[eventField] = [ x for x in eventItem.eventValues[eventField] if eventField in self.correlationFields ]
+                        # Existing correlation with matchines correlation fields excluding excluded correlation field values
                         matchFound = [ fields[eventField][x] for x in eventItem.eventValues[eventField] if eventField in self.correlationFields and x in fields[eventField] and x not in excludeCorrelationValues[eventField] ]
                         if len(matchFound) > 0:
                             foundCorrelatedRelationship = matchFound[0]
                         else:
-                            matchFound = [ fields[eventField][x] for x in eventItem.eventValues[eventField] if eventField in self.correlationFields and x and x not in excludeCorrelationValues[eventField] ]
+                            # Check that the event has valid correlation fields and the value is not excluded
+                            matchFound = [ x for x in eventItem.eventValues[eventField] if eventField in self.correlationFields and x and x not in excludeCorrelationValues[eventField] ]
                             if len(matchFound) > 0:
                                 processNew = True
                     else:
@@ -368,9 +369,10 @@ class _eventBuildCorrelations(action._action):
   
         # Reduction Loop
         loop = 1
-        maxLoops = 5
+        maxLoops = 100
         while loop > 0 and maxLoops > 0:
             correlatedFieldsHash = {}
+            correlatedRelationshipsChanged = False
             for correlatedRelationship in correlatedRelationships:
                 for eventField, eventValue in ((eventField, eventValue) for eventField in correlatedRelationship.correlations for eventValue in correlatedRelationship.correlations[eventField] ):
                     if eventField in self.correlationFields and eventValue not in excludeCorrelationValues[eventField]:
@@ -404,9 +406,12 @@ class _eventBuildCorrelations(action._action):
                                 correlatedRelationship.bulkMerge(currentCorrelation._id,self.bulkClass)
                                 correlatedRelationships.remove(correlatedRelationship)
                                 loop+=1
+                                correlatedRelationshipsChanged = True
                                 break
                         except KeyError:
                             correlatedFieldsHash[eventField] = { eventValue : correlatedRelationship }
+                if correlatedRelationshipsChanged:
+                    break
             maxLoops -= 1
             loop -= 1
 
