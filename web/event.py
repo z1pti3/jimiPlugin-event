@@ -56,7 +56,7 @@ def getEventCorrelation(eventCorrelationID):
         except KeyError:
             label = sourceEvent["uid"]
         if label not in nodesDict:
-            nodesDict[label] = { "id" : sourceEvent["uid"], "label" : label, "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
+            nodesDict[label] = { "id" : label, "label" : label, "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
         else:
             nodesDict[label]["value"] += 1
 
