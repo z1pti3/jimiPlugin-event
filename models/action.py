@@ -200,7 +200,7 @@ class _eventUpdate(action._action):
                                 currentEvent.eventValues[key].append(value)
                         else:
                             currentEvent.eventValues[key] = value
-            currentEvent.eventFields = list(currentEvent.keys())
+            currentEvent.eventFields = list(currentEvent.eventValues.keys())
             currentEvent.update(["eventValues","eventFields"])
             actionResult["result"] = True
             actionResult["rc"] = 0
@@ -302,10 +302,6 @@ class _eventBuildCorrelations(action._action):
 
         # Initial Pass Loop
         for eventItem in events:
-            d = False
-            if eventItem._id == "607fea7f965c744d4e61775c":
-                print(eventItem)
-                d = True
             foundCorrelatedRelationship = None
             correlations = {}
             processNew = False
