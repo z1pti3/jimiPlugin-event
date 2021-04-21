@@ -200,7 +200,8 @@ class _eventUpdate(action._action):
                                 currentEvent.eventValues[key].append(value)
                         else:
                             currentEvent.eventValues[key] = value
-            currentEvent.update(["eventValues"])
+            currentEvent.eventFields = list(currentEvent.keys())
+            currentEvent.update(["eventValues","eventFields"])
             actionResult["result"] = True
             actionResult["rc"] = 0
         except KeyError:
@@ -258,6 +259,7 @@ class _eventBuildCorrelations(action._action):
     correlationFields = list()
     excludeCorrelationValues = dict()
     alwaysProcessEvents = bool()
+    ignoreScoreLessThan = int()
 
     def __init__(self):
         self.bulkClass = db._bulk()
@@ -301,7 +303,7 @@ class _eventBuildCorrelations(action._action):
         # Initial Pass Loop
         for eventItem in events:
             d = False
-            if eventItem._id == "607c78f6233eb75b85f99c52":
+            if eventItem._id == "607fea7f965c744d4e61775c":
                 print(eventItem)
                 d = True
             foundCorrelatedRelationship = None
