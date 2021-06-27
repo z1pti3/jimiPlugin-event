@@ -1,12 +1,12 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='themes/default/default.css') }}">
+{% extends "main.html" %}
 
-<html>
-    <head>
-        
-    </head>
-    <body class="theme-panelContainer">
-        <a href="events/">Events</a>
-        <br>
-        <a href="eventCorrelations/">Event Correlations</a>
-    </body>
-</html>
+{% block head %}
+    {{ jimi.jquery() }}
+    {{ jimi.tables() }}
+{% endblock %}
+
+{% block main %}
+    <a href="events/">Events</a>
+    <br>
+    <a href="eventCorrelations/">Event Correlations</a>
+{% endblock %}
