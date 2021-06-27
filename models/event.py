@@ -8,7 +8,6 @@ class _eventCorrelation(db._document):
     types = list()
     subTypes = list()
     correlations = dict()
-    relationships = list()
     score = float()
     correlationLastUpdate = int()
     expiryTime = int()

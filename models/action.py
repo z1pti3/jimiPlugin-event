@@ -306,27 +306,28 @@ class _eventBuildCorrelations(action._action):
             correlations = {}
             processNew = False
             for eventField in eventItem.eventValues:
-                try:
-                    if type(eventItem.eventValues[eventField]) is list:
-                        correlations[eventField] = [ x for x in eventItem.eventValues[eventField] if eventField in self.correlationFields ]
-                        # Existing correlation with matchines correlation fields excluding excluded correlation field values
-                        matchFound = [ fields[eventField][x] for x in eventItem.eventValues[eventField] if eventField in self.correlationFields and x in fields[eventField] and x not in excludeCorrelationValues[eventField] ]
-                        if len(matchFound) > 0:
-                            foundCorrelatedRelationship = matchFound[0]
-                        else:
-                            # Check that the event has valid correlation fields and the value is not excluded
-                            matchFound = [ x for x in eventItem.eventValues[eventField] if eventField in self.correlationFields and x and x not in excludeCorrelationValues[eventField] ]
+                if eventField in self.correlationFields:
+                    try:
+                        if type(eventItem.eventValues[eventField]) is list:
+                            correlations[eventField] = [ x for x in eventItem.eventValues[eventField] if eventField in self.correlationFields ]
+                            # Existing correlation with matchines correlation fields excluding excluded correlation field values
+                            matchFound = [ fields[eventField][x] for x in eventItem.eventValues[eventField] if eventField in self.correlationFields and x in fields[eventField] and x not in excludeCorrelationValues[eventField] ]
                             if len(matchFound) > 0:
-                                processNew = True
-                    else:
-                        correlations[eventField] = [eventItem.eventValues[eventField]]
-                        if eventField in self.correlationFields and eventItem.eventValues[eventField] in fields[eventField] and eventItem.eventValues[eventField] not in excludeCorrelationValues[eventField]:
-                            foundCorrelatedRelationship = fields[eventField][eventItem.eventValues[eventField]]
+                                foundCorrelatedRelationship = matchFound[0]
+                            else:
+                                # Check that the event has valid correlation fields and the value is not excluded
+                                matchFound = [ x for x in eventItem.eventValues[eventField] if eventField in self.correlationFields and x and x not in excludeCorrelationValues[eventField] ]
+                                if len(matchFound) > 0:
+                                    processNew = True
                         else:
-                            if eventField in self.correlationFields and eventItem.eventValues[eventField] and eventItem.eventValues[eventField] not in excludeCorrelationValues[eventField]:
-                                processNew = True
-                except KeyError:
-                    pass
+                            correlations[eventField] = [eventItem.eventValues[eventField]]
+                            if eventField in self.correlationFields and eventItem.eventValues[eventField] in fields[eventField] and eventItem.eventValues[eventField] not in excludeCorrelationValues[eventField]:
+                                foundCorrelatedRelationship = fields[eventField][eventItem.eventValues[eventField]]
+                            else:
+                                if eventField in self.correlationFields and eventItem.eventValues[eventField] and eventItem.eventValues[eventField] not in excludeCorrelationValues[eventField]:
+                                    processNew = True
+                    except KeyError:
+                        pass
             # Create new
             if processNew == True:
                 newEventCorrelation = event._eventCorrelation()
@@ -380,11 +381,12 @@ class _eventBuildCorrelations(action._action):
                             else:
                                 currentCorrelation = correlatedFieldsHash[eventField][eventValue]
                                 for eventField in correlatedRelationship.correlations:
-                                    try:
-                                        currentCorrelation.correlations[eventField] += correlatedRelationship.correlations[eventField]
-                                        currentCorrelation.correlations[eventField] = list(set(currentCorrelation.correlations[eventField]))
-                                    except KeyError:
-                                        currentCorrelation.correlations[eventField] = correlatedRelationship.correlations[eventField]
+                                    if not eventField.endswith("_data"):
+                                        try:
+                                            currentCorrelation.correlations[eventField] += correlatedRelationship.correlations[eventField]
+                                            currentCorrelation.correlations[eventField] = list(set(currentCorrelation.correlations[eventField]))
+                                        except KeyError:
+                                            currentCorrelation.correlations[eventField] = correlatedRelationship.correlations[eventField]
                                 for mergeKey in ["ids","types","subTypes"]:
                                     for value in getattr(correlatedRelationship,mergeKey):
                                         if value not in getattr(currentCorrelation,mergeKey):
