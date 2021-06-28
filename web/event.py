@@ -9,12 +9,48 @@ from core import api
 from plugins.event.models import event
 
 import jimi
+from web import ui
 
 pluginPages = Blueprint('eventPages', __name__, template_folder="templates")
 
 @pluginPages.route("/")
 def mainPage():
-    return render_template("home.html")
+    eventCount = event._event().count(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })["results"][0]["count"]
+    correlationCount = event._eventCorrelation().count(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() }, "$where" : "this.ids.length>1" })["results"][0]["count"]
+    return render_template("home.html", activeEvents=eventCount, activeCorrelations=correlationCount)
+
+@pluginPages.route("/activeEventsTable/<action>/")
+def activeEventsTable(action):
+    findActiveEvents = event._event().getAsClass(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })
+    total = len(findActiveEvents)
+    columns = ["id","Title","Score"]
+    table = ui.table(columns,total,total)
+    if action == "build":
+        return table.getColumns() ,200
+    elif action == "poll":
+        # Custom table data so it can be vertical
+        data = []
+        for activeEvent in findActiveEvents:
+            data.append([ui.safe(activeEvent._id),ui.dictTable(activeEvent.eventTitle),ui.dictTable(activeEvent.score)])
+        table.data = data
+        return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : 0, "recordsFiltered" : 0, "recordsTotal" : 0, "data" : data } ,200
+
+@pluginPages.route("/activeCorrelationTable/<action>/")
+def activeCorrelationTable(action):
+    findActiveCorrelations = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() }, "$where" : "this.ids.length>1" })
+    total = len(findActiveCorrelations)
+    columns = ["id","Types","Sub Types","Score"]
+    table = ui.table(columns,total,total)
+    if action == "build":
+        return table.getColumns() ,200
+    elif action == "poll":
+        # Custom table data so it can be vertical
+        data = []
+        for activeCorrelation in findActiveCorrelations:
+            data.append(["<a href='/plugin/event/eventCorrelations/{0}/'>{0}</a>".format(activeCorrelation._id),ui.dictTable(activeCorrelation.types),ui.dictTable(activeCorrelation.subTypes),ui.dictTable(activeCorrelation.score)])
+        table.data = data
+        
+        return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : 0, "recordsFiltered" : 0, "recordsTotal" : 0, "data" : data } ,200
 
 @pluginPages.route("/events/")
 def eventsPage():
