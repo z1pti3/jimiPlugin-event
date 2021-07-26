@@ -16,7 +16,28 @@ pluginPages = Blueprint('eventPages', __name__, template_folder="templates")
 @pluginPages.route("/")
 def mainPage():
     eventCount = event._event().count(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() } })["results"][0]["count"]
-    correlationCount = event._eventCorrelation().count(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() }, "$where" : "this.ids.length>1" })["results"][0]["count"]
+    correlationCount = event._eventCorrelation().aggregate(sessionData=api.g.sessionData,aggregateStatement=[
+        { 
+            "$project": {
+                "_id": 1,
+                "expiryTime": 1,
+                "idsSize": { "$cond": { "if": { "$isArray": "$ids" }, "then": { "$size": "$ids" }, "else": 0} }
+            }
+        },
+        {
+            "$match": {
+                "expiryTime" : { "$gt" : time.time() },
+                "idsSize" : { "$gt" : 1 }
+            }
+        },
+        {
+            "$count" : "count"
+        }
+    ])
+    if len(correlationCount) > 0:
+        correlationCount = correlationCount[0]["count"]
+    else:
+        correlationCount = 0
     return render_template("home.html", activeEvents=eventCount, activeCorrelations=correlationCount)
 
 @pluginPages.route("/activeEventsTable/<action>/")
@@ -37,7 +58,24 @@ def activeEventsTable(action):
 
 @pluginPages.route("/activeCorrelationTable/<action>/")
 def activeCorrelationTable(action):
-    findActiveCorrelations = event._eventCorrelation().getAsClass(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() }, "$where" : "this.ids.length>1" })
+    findActiveCorrelations = event._eventCorrelation().aggregate(sessionData=api.g.sessionData,aggregateStatement=[
+        { 
+            "$project": {
+                "_id": 1,
+                "expiryTime": 1,
+                "types" : 1,
+                "subTypes" : 1,
+                "score" : 1,
+                "idsSize": { "$cond": { "if": { "$isArray": "$ids" }, "then": { "$size": "$ids" }, "else": 0} }
+            }
+        },
+        {
+            "$match": {
+                "expiryTime" : { "$gt" : time.time() },
+                "idsSize" : { "$gt" : 1 }
+            }
+        }
+    ])
     total = len(findActiveCorrelations)
     columns = ["id","Types","Sub Types","Score"]
     table = ui.table(columns,total,total)
@@ -47,7 +85,7 @@ def activeCorrelationTable(action):
         # Custom table data so it can be vertical
         data = []
         for activeCorrelation in findActiveCorrelations:
-            data.append(["<a href='/plugin/event/eventCorrelations/{0}/'>{0}</a>".format(activeCorrelation._id),ui.dictTable(activeCorrelation.types),ui.dictTable(activeCorrelation.subTypes),ui.dictTable(activeCorrelation.score)])
+            data.append(["<a href='/plugin/event/eventCorrelations/{0}/'>{0}</a>".format(activeCorrelation["_id"]),ui.dictTable(activeCorrelation["types"]),ui.dictTable(activeCorrelation["subTypes"]),ui.dictTable(activeCorrelation["score"])])
         table.data = data
         
         return { "draw" : int(jimi.api.request.args.get('draw')), "recordsTable" : 0, "recordsFiltered" : 0, "recordsTotal" : 0, "data" : data } ,200
@@ -59,7 +97,30 @@ def eventsPage():
 
 @pluginPages.route("/eventCorrelations/")
 def eventCorrelationsPage():
-    findActiveEvents = event._eventCorrelation().query(sessionData=api.g.sessionData,query={"expiryTime" : { "$gt" : time.time() }, "$where" : "this.ids.length>1" })["results"]
+    findActiveEvents = event._eventCorrelation().aggregate(sessionData=api.g.sessionData,aggregateStatement=[
+        { 
+            "$project": {
+                "_id": 1,
+                "expiryTime": 1,
+                "types" : 1,
+                "subTypes" : 1,
+                "score" : 1,
+                "correlationName" : 1,
+                "ids" : 1,
+                "correlations" : 1,
+                "relationships" : 1,
+                "correlationLastUpdate" : 1,
+                "mergedID" : 1,
+                "idsSize": { "$cond": { "if": { "$isArray": "$ids" }, "then": { "$size": "$ids" }, "else": 0} }
+            }
+        },
+        {
+            "$match": {
+                "expiryTime" : { "$gt" : time.time() },
+                "idsSize" : { "$gt" : 1 }
+            }
+        }
+    ])
     return render_template("eventCorrelations.html", eventCorrelations=findActiveEvents)
 
 @pluginPages.route("/eventCorrelations/<eventCorrelationID>/")
