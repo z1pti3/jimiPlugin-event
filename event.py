@@ -1,7 +1,9 @@
 from core import plugin, model
 
+from plugins.event.models import event
+
 class _event(plugin._plugin):
-    version = 1.21
+    version = 1.3
 
     def install(self):
         # Register models
@@ -14,6 +16,8 @@ class _event(plugin._plugin):
         model.registerModel("eventBuildCorrelations","_eventBuildCorrelations","_action","plugins.event.models.action")
         model.registerModel("eventCorrelation","_eventCorrelation","_document","plugins.event.models.event",True)
         model.registerModel("eventGetCorrelation","_eventGetCorrelation","_action","plugins.event.models.action")
+        event._event()._dbCollection.create_index([("expiryTime", -1)])
+        event._eventCorrelation()._dbCollection.create_index([("expiryTime", -1)])
         return True
 
     def uninstall(self):
@@ -42,4 +46,8 @@ class _event(plugin._plugin):
             model.registerModel("eventBuildCorrelations","_eventBuildCorrelations","_action","plugins.event.models.action")
         if self.version < 0.7:
             model.registerModel("eventGetCorrelation","_eventGetCorrelation","_action","plugins.event.models.action")
+        if self.version < 1.3:
+            print("Creating indexes...")
+            event._event()._dbCollection.create_index([("expiryTime", -1)])
+            event._eventCorrelation()._dbCollection.create_index([("expiryTime", -1)])
         return True
