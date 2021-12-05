@@ -13,12 +13,6 @@ class _eventThreshold(trigger._trigger):
     idsOnly = bool()
     summaryOnly = bool()
 
-    def __init__(self):
-        pass
-
-    def __del__(self):
-        pass
-
     def check(self):
         correlationName = self.correlationName
         expiryTime = int(time.time())

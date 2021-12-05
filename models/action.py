@@ -24,9 +24,10 @@ class _raiseEvent(action._action):
 
     updateValues = bool()
 
-    def __init__(self):
+    def __init__(self,restrictClass=True):
         cache.globalCache.newCache("eventCache")
         self.bulkClass = db._bulk()
+        return super(_raiseEvent, self).__init__(restrictClass)
 
     def __del__(self):
         events = []
@@ -261,8 +262,9 @@ class _eventBuildCorrelations(action._action):
     alwaysProcessEvents = bool()
     ignoreScoreLessThan = int()
 
-    def __init__(self):
+    def __init__(self,restrictClass=True):
         self.bulkClass = db._bulk()
+        return super(_eventBuildCorrelations, self).__init__(restrictClass)
 
     def run(self,data,persistentData,actionResult):
         correlationName = helpers.evalString(self.correlationName,{"data" : data})
