@@ -76,8 +76,8 @@ class _raiseEvent(action._action):
             score = 0
         data["var"]["event"]["score"] = score
 
-        cacheUID = "{0}-{1}-{2}".format(data["conductID"],data["flow_id"],uid)
-        foundEvent = cache.globalCache.get("eventCache",cacheUID,getEvent,data["conductID"],data["flow_id"],uid,eventType,eventSubType,extendCacheTime=True,customCacheTime=timeToLive,nullUpdate=True)
+        cacheUID = "{0}-{1}-{2}".format(data["conduct_id"],data["flow_id"],uid)
+        foundEvent = cache.globalCache.get("eventCache",cacheUID,getEvent,data["conduct_id"],data["flow_id"],uid,eventType,eventSubType,extendCacheTime=True,customCacheTime=timeToLive,nullUpdate=True)
         if foundEvent != None:
             try:
                 persistentData["plugin"]["event"].append(foundEvent)
@@ -119,7 +119,7 @@ class _raiseEvent(action._action):
                 actionResult["rc"] = 500
                 return actionResult
         
-        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conductID"],data["flow_id"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score,data,eventTitle)
+        eventObject = event._event().bulkNew(self.bulkClass,self.acl,data["conduct_id"],data["flow_id"],eventType,eventSubType,int( time.time() + timeToLive ),eventValues,uid,accuracy,impact,layer,benign,score,data,eventTitle)
         cache.globalCache.insert("eventCache",cacheUID,eventObject,customCacheTime=timeToLive)
         try:
             persistentData["plugin"]["event"].append(eventObject)
