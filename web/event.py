@@ -153,25 +153,36 @@ def getEventCorrelation(eventCorrelationID):
         except KeyError:
             label = sourceEvent["uid"]
         if label not in nodesDict:
-            nodesDict[label] = { "id" : label, "label" : label, "value" : 1, "color" : { "background" : "#C72F1E", "border" : "#C72F1E" , "highlight" : { "background" : "#000", "border" : "#FFF" } } }
+            nodesDict[label] = { "id" : label, "label" : label, "value" : 1,  "icon": {"face": "'Font Awesome 6 Free'","code": "\uf780", "color": "#C72F1E", "weight":"bold"} }
         else:
             nodesDict[label]["value"] += 1
 
         nodeUID = nodesDict[label]["id"]
+        eventSettings = jimi.settings.getSetting("event","icons")
         for field, fieldValue in sourceEvent["eventValues"].items():
             if type(fieldValue) is list:
                 for fieldValueItem in fieldValue:
-                    uid = "{0}={1}".format(field,fieldValueItem)
+                    iconCode = "\uf059"
+                    if field in eventSettings:
+                        uid = fieldValueItem
+                        iconCode = eventSettings[field]
+                    else:
+                        uid = "{0}={1}".format(field,fieldValueItem)
                     if uid not in nodesDict:
-                        nodesDict[uid] = { "id" : uid, "label" : uid, "value" : 1 }
+                        nodesDict[uid] = { "id" : uid, "label" : uid, "value" : 1, "icon": {"face": "'Font Awesome 6 Free'","code": iconCode, "color": "#1D39C4", "weight":"bold"} }
                     else:
                         nodesDict[uid]["value"] += 1
                     key = "{0}-{1}".format(nodeUID,uid)
                     edgesDict[key] = { "id" : key, "from" : nodeUID, "to" : uid }
             else:
-                uid = "{0}={1}".format(field,fieldValue)
+                iconCode = "\uf059"
+                if field in eventSettings:
+                    uid = fieldValue
+                    iconCode = eventSettings[field]
+                else:
+                    uid = "{0}={1}".format(field,fieldValue)
                 if uid not in nodesDict:
-                    nodesDict[uid] = { "id" : uid, "label" : uid, "value" : 1 }
+                    nodesDict[uid] = { "id" : uid, "label" : uid, "value" : 1,"icon": {"face": "'Font Awesome 6 Free'","code": iconCode, "color": "#1D39C4", "weight":"bold"} }
                 else:
                     nodesDict[uid]["value"] += 1
                 key = "{0}-{1}".format(nodeUID,uid)

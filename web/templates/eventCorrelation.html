@@ -4,7 +4,9 @@
     {{ jimi.jquery() }}
     {{ jimi.tables() }}
     {{ jimi.visjs() }}
+       
 {% endblock %}
+
 
 {% block main %}
     <button onclick="closeCorrelation()" class="btn btn-primary importConductButton theme-panelButton">Close</button>
@@ -117,13 +119,11 @@
                     }
                 },
                 nodes: {
-                    shape: "dot",
-                    color: {
-                        background: "#4090c9",
-                        highlight: {
-                            background: "#000",
-                            border: "#FFF"
-                        }
+                    shape: "icon",
+                    icon: {
+                        face: "FontAwesome",
+                        code: "\uf05b",
+                        color: "#C72F1E"
                     },
                     font: {
                         size: 10,
